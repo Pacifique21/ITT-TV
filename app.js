@@ -2,161 +2,165 @@
 "use strict";
 
 const $ = id => document.getElementById(id);
-const PAGE_SIZE = 24;
 
 const state = {
+  page: "home",
+  news: [],
   tv: [],
   radio: [],
-  news: [],
   movies: [],
-  tvPage: 1,
-  radioPage: 1,
-  newsPage: 1,
-  moviePage: 1,
-  tvSearch: "",
-  radioSearch: "",
-  newsSearch: "",
-  movieSearch: "",
-  globalSearch: "",
-  tvCountry: "",
-  tvCategory: "",
-  radioCountry: "",
-  radioLanguage: "",
-  newsSource: ""
+  limits: { news: 12, tv: 20, radio: 20, movies: 12 },
+  hls: null,
+  loaded: {}
 };
 
-function safe(value) {
-  return String(value ?? "").replace(/[&<>"']/g, c => ({
-    "&":"&amp;",
-    "<":"&lt;",
-    ">":"&gt;",
-    '"':"&quot;",
-    "'":"&#39;"
-  })[c]);
+function esc(value = "") {
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+  }[c]));
 }
 
-function setText(id, value) {
-  const element = $(id);
-  if (element) element.textContent = value;
+function status(id, message) {
+  $(id).textContent = message;
+}
+
+function empty(id, message) {
+  $(id).innerHTML = `<div class="empty">${esc(message)}</div>`;
 }
 
 /* NAVIGATION */
-
 function navigate(page) {
-  if (!$ (page)) return;
+  if (!$(page)) return;
+
+  state.page = page;
 
   document.querySelectorAll(".page").forEach(section => {
     section.classList.toggle("active", section.id === page);
   });
 
   document.querySelectorAll(".nav-btn").forEach(button => {
-    button.classList.toggle(
-      "active",
-      button.dataset.page === page
-    );
+    button.classList.toggle("active", button.dataset.page === page);
   });
 
-  $("mainNav")?.classList.remove("open");
-  $("menuToggle")?.setAttribute("aria-expanded", "false");
+  $("mainNav").classList.remove("open");
+  $("menuToggle").setAttribute("aria-expanded", "false");
 
-  window.scrollTo({top:0, behavior:"smooth"});
+  if (!state.loaded[page]) {
+    state.loaded[page] = true;
+
+    if (page === "news") loadNews();
+    if (page === "tv") loadTV();
+    if (page === "radio") loadRadio();
+    if (page === "movies") loadMovies();
+  }
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 document.querySelectorAll("[data-page]").forEach(button => {
-  button.addEventListener("click", event => {
-    event.preventDefault();
-    navigate(button.dataset.page);
-  });
+  button.addEventListener("click", () => navigate(button.dataset.page));
 });
 
-$("menuToggle")?.addEventListener("click", () => {
-  $("mainNav").classList.toggle("open");
+document.querySelectorAll("[data-go]").forEach(button => {
+  button.addEventListener("click", () => navigate(button.dataset.go));
 });
 
-/* SHARED SELECT */
+$("menuToggle").addEventListener("click", () => {
+  const open = $("mainNav").classList.toggle("open");
+  $("menuToggle").setAttribute("aria-expanded", String(open));
+});
 
-function fillSelect(id, values, label) {
-  const select = $(id);
-  if (!select) return;
+/* NEWS */
+const feeds = [
+  { name:"BBC", url:"https://feeds.bbci.co.uk/news/world/rss.xml" },
+  { name:"Al Jazeera", url:"https://www.aljazeera.com/xml/rss/all.xml" },
+  { name:"DW", url:"https://rss.dw.com/rdf/rss-en-all" }
+];
 
-  const previous = select.value;
-  select.innerHTML = "";
+async function loadNews() {
+  status("newsStatus", "Loading news...");
+  empty("newsGrid", "Loading headlines...");
 
-  const first = document.createElement("option");
-  first.value = "";
-  first.textContent = label;
-  select.appendChild(first);
+  const results = await Promise.allSettled(
+    feeds.map(async feed => {
+      const api = "https://api.rss2json.com/v1/api.json?rss_url=" +
+        encodeURIComponent(feed.url);
 
-  values.forEach(value => {
-    const option = document.createElement("option");
-    option.value = value;
-    option.textContent = value;
-    select.appendChild(option);
-  });
+      const response = await fetch(api);
+      if (!response.ok) throw new Error("News request failed");
 
-  if (values.includes(previous)) select.value = previous;
+      const data = await response.json();
+      if (data.status !== "ok") throw new Error("Feed unavailable");
+
+      return (data.items || []).map(item => ({
+        title: item.title || "News story",
+        link: item.link || "#",
+        description: (item.description || "")
+          .replace(/<[^>]*>/g, " ")
+          .trim()
+          .slice(0, 200),
+        date: item.pubDate || "",
+        source: feed.name
+      }));
+    })
+  );
+
+  state.news = results
+    .filter(result => result.status === "fulfilled")
+    .flatMap(result => result.value)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  state.limits.news = 12;
+  renderNews();
+
+  status(
+    "newsStatus",
+    state.news.length
+      ? `${state.news.length} headlines loaded.`
+      : "News could not load. Check your internet connection or try again."
+  );
 }
 
-/* TV PLAYER */
+function renderNews() {
+  const query = $("newsSearch").value.toLowerCase().trim();
+  const source = $("newsSource").value;
 
-let hlsPlayer = null;
+  const items = state.news.filter(item =>
+    (source === "all" || item.source === source) &&
+    (item.title.toLowerCase().includes(query) ||
+     item.description.toLowerCase().includes(query))
+  );
 
-function stopTV() {
-  const video = $("tvPlayer");
+  const shown = items.slice(0, state.limits.news);
 
-  if (hlsPlayer) {
-    hlsPlayer.destroy();
-    hlsPlayer = null;
-  }
+  $("newsGrid").innerHTML = shown.map(item => `
+    <article class="news-card">
+      <span class="source">${esc(item.source)}</span>
+      <h3>${esc(item.title)}</h3>
+      <p>${esc(item.description)}</p>
+      <a href="${esc(item.link)}" target="_blank" rel="noopener noreferrer">
+        Read full story ↗
+      </a>
+    </article>
+  `).join("");
 
-  if (video) {
-    video.pause();
-    video.removeAttribute("src");
-    video.load();
-  }
+  if (!shown.length) empty("newsGrid", "No matching news found.");
+
+  $("moreNews").hidden = items.length <= state.limits.news;
 }
 
-function playTV(url, name) {
-  const video = $("tvPlayer");
-  if (!video || !url) return;
+$("newsSearch").addEventListener("input", renderNews);
+$("newsSource").addEventListener("change", renderNews);
+$("moreNews").addEventListener("click", () => {
+  state.limits.news += 12;
+  renderNews();
+});
+$("refreshNews").addEventListener("click", loadNews);
 
-  stopTV();
-
-  setText("tvTitle", name);
-  setText("tvMessage", "Connecting to TV stream...");
-
-  if (url.includes(".m3u8") && window.Hls && Hls.isSupported()) {
-    hlsPlayer = new Hls();
-    hlsPlayer.loadSource(url);
-    hlsPlayer.attachMedia(video);
-
-    hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play().catch(() => {
-        setText("tvMessage", "Press Play to start watching.");
-      });
-    });
-
-    hlsPlayer.on(Hls.Events.ERROR, (_, data) => {
-      if (data.fatal) {
-        setText("tvMessage", "This TV stream failed. Try another channel.");
-      }
-    });
-  } else {
-    video.src = url;
-    video.play().catch(() => {
-      setText("tvMessage", "Press Play to start watching.");
-    });
-  }
-
-  video.onerror = () => {
-    setText("tvMessage", "This stream is unavailable or blocks external playback.");
-  };
-}
-
-/* LOAD TV CHANNELS */
-
+/* LIVE TV */
 async function loadTV() {
-  setText("tvStatus", "Loading TV channels...");
+  status("tvLoadStatus", "Loading TV channels...");
+  empty("tvGrid", "Loading channels...");
 
   try {
     const [channelResponse, streamResponse] = await Promise.all([
@@ -165,7 +169,7 @@ async function loadTV() {
     ]);
 
     if (!channelResponse.ok || !streamResponse.ok) {
-      throw new Error("TV data unavailable");
+      throw new Error("TV directory unavailable");
     }
 
     const [channels, streams] = await Promise.all([
@@ -173,553 +177,391 @@ async function loadTV() {
       streamResponse.json()
     ]);
 
-    const streamMap = new Map();
+    const channelMap = new Map(channels.map(channel => [
+      channel.id, channel
+    ]));
 
-    streams.forEach(stream => {
-      if (stream.channel && stream.url && !streamMap.has(stream.channel)) {
-        streamMap.set(stream.channel, stream.url);
-      }
-    });
+    state.tv = streams
+      .filter(stream => stream.url && channelMap.has(stream.channel))
+      .map(stream => {
+        const channel = channelMap.get(stream.channel);
 
-    state.tv = channels
-      .filter(channel =>
-        channel.id &&
-        channel.name &&
-        channel.is_nsfw !== true &&
-        streamMap.has(channel.id)
-      )
-      .map(channel => ({
-        id: channel.id,
-        name: channel.name,
-        country: channel.country || "Unknown",
-        categories: channel.categories || [],
-        logo: channel.logo || "",
-        url: streamMap.get(channel.id)
-      }))
-      .sort((a,b) => a.name.localeCompare(b.name));
+        return {
+          name: channel.name || channel.id,
+          country: channel.country || "",
+          logo: channel.logo || "",
+          language: (channel.languages || []).join(" "),
+          url: stream.url
+        };
+      });
 
-    fillSelect(
-      "tvCountry",
-      [...new Set(state.tv.map(x => x.country))].sort(),
-      "All countries"
-    );
+    state.tv.sort((a, b) => a.name.localeCompare(b.name));
 
-    fillSelect(
-      "tvCategory",
-      [...new Set(state.tv.flatMap(x => x.categories))].sort(),
-      "All categories"
-    );
+    const countries = [...new Set(
+      state.tv.map(channel => channel.country).filter(Boolean)
+    )].sort();
 
+    $("tvCountry").innerHTML =
+      '<option value="">All countries</option>' +
+      countries.map(country =>
+        `<option value="${esc(country)}">${esc(country)}</option>`
+      ).join("");
+
+    state.limits.tv = 20;
     renderTV();
-    setText("tvStatus", `${state.tv.length} TV channels with listed streams found.`);
+
+    status("tvLoadStatus", `${state.tv.length} TV streams listed.`);
   } catch (error) {
-    console.error(error);
-    setText("tvStatus", "TV data could not load. Check internet and refresh.");
+    status("tvLoadStatus", "TV channels failed to load. Try Reload.");
+    empty("tvGrid", "TV directory is temporarily unavailable.");
   }
 }
 
 function renderTV() {
-  const grid = $("tvGrid");
-  if (!grid) return;
+  const query = $("tvSearch").value.toLowerCase().trim();
+  const country = $("tvCountry").value;
 
-  const query = (
-    state.tvSearch + " " + state.globalSearch
-  ).toLowerCase().trim();
+  const items = state.tv.filter(channel =>
+    (!country || channel.country === country) &&
+    (
+      channel.name.toLowerCase().includes(query) ||
+      channel.country.toLowerCase().includes(query) ||
+      channel.language.toLowerCase().includes(query)
+    )
+  );
 
-  const filtered = state.tv.filter(channel => {
-    const matchesSearch = !query ||
-      `${channel.name} ${channel.country} ${channel.categories.join(" ")}`
-        .toLowerCase().includes(query);
+  const shown = items.slice(0, state.limits.tv);
 
-    return matchesSearch &&
-      (!state.tvCountry || channel.country === state.tvCountry) &&
-      (!state.tvCategory || channel.categories.includes(state.tvCategory));
-  });
-
-  const shown = filtered.slice(0, state.tvPage * PAGE_SIZE);
-
-  grid.innerHTML = shown.length ? shown.map(channel => `
+  $("tvGrid").innerHTML = shown.map(channel => `
     <article class="media-card">
       <div class="media-thumb">
         ${channel.logo
-          ? `<img src="${safe(channel.logo)}" alt="" loading="lazy" onerror="this.remove()">`
+          ? `<img src="${esc(channel.logo)}" alt="" loading="lazy"
+               onerror="this.remove()">`
           : "📺"}
       </div>
-      <h3>${safe(channel.name)}</h3>
-      <p>${safe(channel.country)}</p>
-      <p>${safe(channel.categories.join(", "))}</p>
-      <button class="card-action" data-tv-id="${safe(channel.id)}">
-        ▶ Watch TV
+      <h3>${esc(channel.name)}</h3>
+      <p>${esc(channel.country || "Country unavailable")}</p>
+      <button class="card-action"
+        data-tv-index="${state.tv.indexOf(channel)}">
+        ▶ Watch here
       </button>
     </article>
-  `).join("") : '<div class="empty">No TV channels found.</div>';
+  `).join("");
 
-  grid.querySelectorAll("[data-tv-id]").forEach(button => {
-    button.addEventListener("click", () => {
-      const channel = state.tv.find(x => x.id === button.dataset.tvId);
-      if (channel) {
-        navigate("tv");
-        playTV(channel.url, channel.name);
-      }
-    });
-  });
+  if (!shown.length) empty("tvGrid", "No channels found.");
 
-  $("tvMore").hidden = shown.length >= filtered.length;
-  setText("tvCount", filtered.length);
+  $("moreTV").hidden = items.length <= state.limits.tv;
 }
 
-/* RADIO */
+function playTV(channel) {
+  const video = $("tvPlayer");
 
-async function loadRadio() {
-  setText("radioStatus", "Loading radio stations...");
+  if (state.hls) {
+    state.hls.destroy();
+    state.hls = null;
+  }
 
-  try {
-    const params = new URLSearchParams({
-      limit: "1000",
-      hidebroken: "true",
-      order: "clickcount",
-      reverse: "true"
+  video.pause();
+  video.removeAttribute("src");
+  video.load();
+
+  $("tvNowTitle").textContent = channel.name;
+  status("tvStatus", "Connecting to TV stream...");
+
+  if (
+    window.Hls &&
+    Hls.isSupported() &&
+    /\.m3u8($|\?)/i.test(channel.url)
+  ) {
+    state.hls = new Hls();
+    state.hls.loadSource(channel.url);
+    state.hls.attachMedia(video);
+
+    state.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      video.play().catch(() => {
+        status("tvStatus", "Press Play to start the channel.");
+      });
     });
 
-    const response = await fetch(
-      "https://all.api.radio-browser.info/json/stations/search?" + params
-    );
+    state.hls.on(Hls.Events.ERROR, (_, data) => {
+      if (data.fatal) {
+        status("tvStatus", "This stream is unavailable. Try another channel.");
+      }
+    });
+  } else {
+    video.src = channel.url;
+    video.play().catch(() => {
+      status("tvStatus", "Press Play. This stream may not support your browser.");
+    });
+  }
 
-    if (!response.ok) throw new Error("Radio data unavailable");
+  video.scrollIntoView({ behavior:"smooth", block:"center" });
+}
 
-    const stations = await response.json();
+$("tvGrid").addEventListener("click", event => {
+  const button = event.target.closest("[data-tv-index]");
+  if (!button) return;
 
-    state.radio = stations
-      .filter(station => station.name && (station.url_resolved || station.url))
+  playTV(state.tv[Number(button.dataset.tvIndex)]);
+});
+
+$("tvSearch").addEventListener("input", renderTV);
+$("tvCountry").addEventListener("change", renderTV);
+$("moreTV").addEventListener("click", () => {
+  state.limits.tv += 20;
+  renderTV();
+});
+$("refreshTV").addEventListener("click", loadTV);
+
+/* RADIO */
+async function loadRadio() {
+  status("radioLoadStatus", "Loading radio stations...");
+  empty("radioGrid", "Loading radio...");
+
+  try {
+    const url =
+      "https://de1.api.radio-browser.info/json/stations/search" +
+      "?hidebroken=true&limit=300&order=clickcount&reverse=true";
+
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Radio service unavailable");
+
+    const data = await response.json();
+
+    state.radio = data
+      .filter(station => station.url_resolved || station.url)
       .map(station => ({
-        id: station.stationuuid,
-        name: station.name,
-        country: station.country || "Unknown",
-        language: station.language || "Unknown",
-        logo: station.favicon || "",
+        name: station.name || "Radio station",
+        country: station.country || "",
+        language: station.language || "",
         url: station.url_resolved || station.url
       }));
 
-    fillSelect(
-      "radioCountry",
-      [...new Set(state.radio.map(x => x.country))].sort(),
-      "All countries"
-    );
+    const countries = [...new Set(
+      state.radio.map(station => station.country).filter(Boolean)
+    )].sort();
 
-    const languages = [
-      ...new Set(
-        state.radio.flatMap(x =>
-          x.language.split(",").map(y => y.trim())
-        ).filter(Boolean)
-      )
-    ].sort();
+    $("radioCountry").innerHTML =
+      '<option value="">All countries</option>' +
+      countries.map(country =>
+        `<option value="${esc(country)}">${esc(country)}</option>`
+      ).join("");
 
-    fillSelect("radioLanguage", languages, "All languages");
-
+    state.limits.radio = 20;
     renderRadio();
-    setText("radioStatus", `${state.radio.length} radio stations found.`);
+
+    status("radioLoadStatus", `${state.radio.length} radio stations loaded.`);
   } catch (error) {
-    console.error(error);
-    setText("radioStatus", "Radio stations could not load. Check internet and refresh.");
+    status("radioLoadStatus", "Radio stations failed to load. Try Reload.");
+    empty("radioGrid", "Radio directory is temporarily unavailable.");
   }
 }
 
-function playRadio(url, name) {
-  const audio = $("radioPlayer");
-  if (!audio || !url) return;
-
-  audio.pause();
-  audio.src = url;
-  audio.load();
-
-  setText("radioTitle", name);
-  setText("radioMessage", "Connecting to radio...");
-
-  audio.play()
-    .then(() => setText("radioMessage", "Radio is playing."))
-    .catch(() => setText("radioMessage", "Press Play. This station may be offline."));
-
-  audio.onerror = () => {
-    setText("radioMessage", "This station is unavailable. Try another station.");
-  };
-}
-
 function renderRadio() {
-  const grid = $("radioGrid");
-  if (!grid) return;
+  const query = $("radioSearch").value.toLowerCase().trim();
+  const country = $("radioCountry").value;
 
-  const query = (
-    state.radioSearch + " " + state.globalSearch
-  ).toLowerCase().trim();
+  const items = state.radio.filter(station =>
+    (!country || station.country === country) &&
+    (
+      station.name.toLowerCase().includes(query) ||
+      station.country.toLowerCase().includes(query) ||
+      station.language.toLowerCase().includes(query)
+    )
+  );
 
-  const filtered = state.radio.filter(station => {
-    const matchesSearch = !query ||
-      `${station.name} ${station.country} ${station.language}`
-        .toLowerCase().includes(query);
+  const shown = items.slice(0, state.limits.radio);
 
-    return matchesSearch &&
-      (!state.radioCountry || station.country === state.radioCountry) &&
-      (!state.radioLanguage ||
-        station.language.toLowerCase().includes(state.radioLanguage.toLowerCase()));
-  });
-
-  const shown = filtered.slice(0, state.radioPage * PAGE_SIZE);
-
-  grid.innerHTML = shown.length ? shown.map(station => `
+  $("radioGrid").innerHTML = shown.map(station => `
     <article class="media-card">
-      <div class="media-thumb">
-        ${station.logo
-          ? `<img src="${safe(station.logo)}" alt="" loading="lazy" onerror="this.remove()">`
-          : "📻"}
-      </div>
-      <h3>${safe(station.name)}</h3>
-      <p>${safe(station.country)}</p>
-      <p>${safe(station.language)}</p>
-      <button class="card-action" data-radio-id="${safe(station.id)}">
-        ▶ Listen Now
+      <div class="media-thumb">📻</div>
+      <h3>${esc(station.name)}</h3>
+      <p>${esc([station.country, station.language].filter(Boolean).join(" • "))}</p>
+      <button class="card-action"
+        data-radio-index="${state.radio.indexOf(station)}">
+        ▶ Listen here
       </button>
     </article>
-  `).join("") : '<div class="empty">No radio stations found.</div>';
+  `).join("");
 
-  grid.querySelectorAll("[data-radio-id]").forEach(button => {
-    button.addEventListener("click", () => {
-      const station = state.radio.find(x => x.id === button.dataset.radioId);
-      if (station) {
-        navigate("radio");
-        playRadio(station.url, station.name);
-      }
-    });
+  if (!shown.length) empty("radioGrid", "No radio stations found.");
+
+  $("moreRadio").hidden = items.length <= state.limits.radio;
+}
+
+$("radioGrid").addEventListener("click", event => {
+  const button = event.target.closest("[data-radio-index]");
+  if (!button) return;
+
+  const station = state.radio[Number(button.dataset.radioIndex)];
+
+  $("radioNowTitle").textContent = station.name;
+  $("radioPlayer").src = station.url;
+
+  status("radioStatus", "Connecting to radio stream...");
+
+  $("radioPlayer").play().catch(() => {
+    status("radioStatus", "Press Play. If it fails, try another station.");
   });
+});
 
-  $("radioMore").hidden = shown.length >= filtered.length;
-  setText("radioCount", filtered.length);
-}
+$("radioSearch").addEventListener("input", renderRadio);
+$("radioCountry").addEventListener("change", renderRadio);
+$("moreRadio").addEventListener("click", () => {
+  state.limits.radio += 20;
+  renderRadio();
+});
+$("refreshRadio").addEventListener("click", loadRadio);
 
-/* NEWS */
-
-const NEWS_FEEDS = [
-  {name:"BBC World", url:"https://feeds.bbci.co.uk/news/world/rss.xml"},
-  {name:"Al Jazeera", url:"https://www.aljazeera.com/xml/rss/all.xml"},
-  {name:"DW News", url:"https://rss.dw.com/rdf/rss-en-all"}
-];
-
-function stripHTML(value) {
-  const doc = new DOMParser().parseFromString(String(value), "text/html");
-  return (doc.body.textContent || "").replace(/\s+/g, " ").trim();
-}
-
-async function loadNews() {
-  setText("newsStatus", "Loading latest news...");
-
-  const results = await Promise.allSettled(
-    NEWS_FEEDS.map(async feed => {
-      const url =
-        "https://api.rss2json.com/v1/api.json?rss_url=" +
-        encodeURIComponent(feed.url);
-
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("News feed unavailable");
-
-      const data = await response.json();
-      if (data.status !== "ok") throw new Error("Feed conversion failed");
-
-      return (data.items || []).map(item => ({
-        title: item.title || "Untitled story",
-        link: item.link || "",
-        description: stripHTML(item.description || item.content || "").slice(0,250),
-        date: item.pubDate || "",
-        source: feed.name
-      }));
-    })
-  );
-
-  state.news = results.flatMap(result =>
-    result.status === "fulfilled" ? result.value : []
-  );
-
-  state.news.sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
-
-  fillSelect(
-    "newsSource",
-    [...new Set(state.news.map(x => x.source))].sort(),
-    "All sources"
-  );
-
-  renderNews();
-
-  setText("homeNewsCount", state.news.length);
-
-  setText(
-    "newsStatus",
-    state.news.length
-      ? `${state.news.length} headlines loaded. Full stories open at their publishers.`
-      : "News feeds could not load. Try refreshing later."
-  );
-}
-
-function renderNews() {
-  const grid = $("newsGrid");
-  if (!grid) return;
-
-  const query = state.newsSearch.toLowerCase().trim();
-
-  const filtered = state.news.filter(item =>
-    (!query || `${item.title} ${item.description} ${item.source}`.toLowerCase().includes(query)) &&
-    (!state.newsSource || item.source === state.newsSource)
-  );
-
-  const shown = filtered.slice(0, state.newsPage * PAGE_SIZE);
-
-  grid.innerHTML = shown.length ? shown.map(item => `
-    <article class="news-card">
-      <span class="source">${safe(item.source)}</span>
-      <h3>${safe(item.title)}</h3>
-      <p>${safe(item.description)}</p>
-      <a href="${safe(item.link)}" target="_blank" rel="noopener noreferrer">
-        Read full story ↗
-      </a>
-    </article>
-  `).join("") : '<div class="empty">No news stories found.</div>';
-
-  $("newsMore").hidden = shown.length >= filtered.length;
-}
-
-/* MOVIES */
-
+/* MOVIES — Internet Archive */
 async function loadMovies() {
-  setText("movieStatus", "Searching for available films...");
+  status("movieLoadStatus", "Searching video collection...");
+  empty("movieGrid", "Loading videos...");
 
   try {
-    const params = new URLSearchParams();
-    params.set("q", "mediatype:movies AND (collection:feature_films OR collection:opensource_movies)");
-    params.append("fl[]", "identifier");
-    params.append("fl[]", "title");
-    params.append("fl[]", "year");
-    params.set("rows", "50");
-    params.set("output", "json");
-
-    const response = await fetch(
-      "https://archive.org/advancedsearch.php?" + params
+    const query = encodeURIComponent(
+      'mediatype:movies AND (format:mpeg4 OR format:"h.264")'
     );
 
-    if (!response.ok) throw new Error("Movie search unavailable");
+    const url =
+      `https://archive.org/advancedsearch.php?q=${query}` +
+      `&fl[]=identifier,title,description&rows=50&page=1&output=json`;
+
+    const response = await fetch(url);
+    if (!response.ok) throw new Error("Movie search failed");
 
     const data = await response.json();
     const docs = data.response?.docs || [];
 
-    const results = await Promise.allSettled(
-      docs.map(async doc => {
-        const metaResponse = await fetch(
-          "https://archive.org/metadata/" + encodeURIComponent(doc.identifier)
-        );
+    const records = await Promise.all(
+      docs.slice(0, 30).map(async doc => {
+        try {
+          const metaResponse = await fetch(
+            `https://archive.org/metadata/${encodeURIComponent(doc.identifier)}`
+          );
 
-        if (!metaResponse.ok) throw new Error("Metadata unavailable");
+          if (!metaResponse.ok) return null;
 
-        const metadata = await metaResponse.json();
+          const metadata = await metaResponse.json();
 
-        const file = (metadata.files || []).find(item =>
-          /\.(mp4|m4v|webm)$/i.test(item.name || "") &&
-          Number(item.size || 0) > 1000000
-        );
+          const files = (metadata.files || []).filter(file =>
+            /\.(mp4|m4v|webm)$/i.test(file.name || "") &&
+            Number(file.size || 0) > 1000000
+          );
 
-        if (!file) return null;
+          if (!files.length) return null;
 
-        const filePath = file.name.split("/")
-          .map(part => encodeURIComponent(part))
-          .join("/");
+          files.sort((a, b) =>
+            Number(b.size || 0) - Number(a.size || 0)
+          );
 
-        return {
-          id: doc.identifier,
-          title: doc.title || doc.identifier,
-          year: doc.year || "",
-          url: `https://archive.org/download/${encodeURIComponent(doc.identifier)}/${filePath}`,
-          page: `https://archive.org/details/${encodeURIComponent(doc.identifier)}`
-        };
+          return {
+            id: doc.identifier,
+            title: doc.title || doc.identifier,
+            description: String(doc.description || "")
+              .replace(/<[^>]*>/g, " ")
+              .slice(0, 180),
+            file: files[0].name
+          };
+        } catch (error) {
+          return null;
+        }
       })
     );
 
-    state.movies = results
-      .filter(result => result.status === "fulfilled" && result.value)
-      .map(result => result.value);
-
+    state.movies = records.filter(Boolean);
+    state.limits.movies = 12;
     renderMovies();
-    setText("movieCount", state.movies.length);
-    setText("movieStatus", `${state.movies.length} films with playable video files found.`);
+
+    status(
+      "movieLoadStatus",
+      `${state.movies.length} playable video files found. Check each item's rights before reuse.`
+    );
   } catch (error) {
-    console.error(error);
-    setText("movieStatus", "Movies could not load. Check internet and refresh.");
+    status("movieLoadStatus", "Movie collection failed to load. Try Reload.");
+    empty("movieGrid", "Video collection is temporarily unavailable.");
   }
 }
 
-function playMovie(movie) {
-  const panel = $("moviePlayerPanel");
-  const video = $("moviePlayer");
-
-  if (!movie || !video) return;
-
-  panel.hidden = false;
-  video.pause();
-  video.src = movie.url;
-  video.load();
-
-  setText("movieTitle", movie.title);
-  setText("movieMessage", "If playback fails, check the source page.");
-
-  video.play().catch(() => {
-    setText("movieMessage", "Press Play to start the film.");
-  });
-
-  video.onerror = () => {
-    setText("movieMessage", "This video file is unavailable in your browser.");
-  };
-
-  panel.scrollIntoView({behavior:"smooth"});
-}
-
 function renderMovies() {
-  const grid = $("movieGrid");
-  if (!grid) return;
+  const query = $("movieSearch").value.toLowerCase().trim();
 
-  const query = state.movieSearch.toLowerCase().trim();
-
-  const filtered = state.movies.filter(movie =>
-    `${movie.title} ${movie.year}`.toLowerCase().includes(query)
+  const items = state.movies.filter(movie =>
+    movie.title.toLowerCase().includes(query) ||
+    movie.description.toLowerCase().includes(query)
   );
 
-  const shown = filtered.slice(0, state.moviePage * PAGE_SIZE);
+  const shown = items.slice(0, state.limits.movies);
 
-  grid.innerHTML = shown.length ? shown.map(movie => `
+  $("movieGrid").innerHTML = shown.map(movie => `
     <article class="media-card">
       <div class="media-thumb">🎬</div>
-      <h3>${safe(movie.title)}</h3>
-      <p>${safe(String(movie.year))}</p>
-      <button class="card-action" data-movie-id="${safe(movie.id)}">
-        ▶ Play Film
+      <h3>${esc(movie.title)}</h3>
+      <p>${esc(movie.description)}</p>
+      <button class="card-action" data-movie-id="${esc(movie.id)}">
+        ▶ Play here
       </button>
-      <p><a href="${safe(movie.page)}" target="_blank" rel="noopener noreferrer">Source page ↗</a></p>
+      <p>
+        <a href="https://archive.org/details/${encodeURIComponent(movie.id)}"
+           target="_blank" rel="noopener noreferrer">Item details ↗</a>
+      </p>
     </article>
-  `).join("") : '<div class="empty">No playable movies found.</div>';
+  `).join("");
 
-  grid.querySelectorAll("[data-movie-id]").forEach(button => {
-    button.addEventListener("click", () => {
-      const movie = state.movies.find(x => x.id === button.dataset.movieId);
-      playMovie(movie);
-    });
+  if (!shown.length) empty("movieGrid", "No videos match your search.");
+
+  $("moreMovies").hidden = items.length <= state.limits.movies;
+}
+
+$("movieGrid").addEventListener("click", event => {
+  const button = event.target.closest("[data-movie-id]");
+  if (!button) return;
+
+  const movie = state.movies.find(item => item.id === button.dataset.movieId);
+  if (!movie) return;
+
+  const videoURL =
+    `https://archive.org/download/${encodeURIComponent(movie.id)}/` +
+    encodeURIComponent(movie.file);
+
+  $("movieNowTitle").textContent = movie.title;
+  $("moviePlayer").src = videoURL;
+
+  status("movieStatus", "Connecting to video...");
+
+  $("moviePlayer").play().catch(() => {
+    status("movieStatus", "Press Play. This video may not support browser playback.");
   });
 
-  $("movieMore").hidden = shown.length >= filtered.length;
-}
-
-/* SEARCH AND FILTERS */
-
-function bindInput(id, callback) {
-  $(id)?.addEventListener("input", event => callback(event.target.value));
-}
-
-function bindChange(id, callback) {
-  $(id)?.addEventListener("change", event => callback(event.target.value));
-}
-
-bindInput("globalSearch", value => {
-  state.globalSearch = value;
-  state.tvPage = 1;
-  state.radioPage = 1;
-  renderTV();
-  renderRadio();
+  $("moviePlayer").scrollIntoView({
+    behavior:"smooth",
+    block:"center"
+  });
 });
 
-bindInput("tvSearch", value => {
-  state.tvSearch = value;
-  state.tvPage = 1;
-  renderTV();
-});
-
-bindInput("radioSearch", value => {
-  state.radioSearch = value;
-  state.radioPage = 1;
-  renderRadio();
-});
-
-bindInput("newsSearch", value => {
-  state.newsSearch = value;
-  state.newsPage = 1;
-  renderNews();
-});
-
-bindInput("movieSearch", value => {
-  state.movieSearch = value;
-  state.moviePage = 1;
+$("movieSearch").addEventListener("input", renderMovies);
+$("moreMovies").addEventListener("click", () => {
+  state.limits.movies += 12;
   renderMovies();
 });
+$("refreshMovies").addEventListener("click", loadMovies);
 
-bindChange("tvCountry", value => {
-  state.tvCountry = value;
-  state.tvPage = 1;
-  renderTV();
+/* GLOBAL SEARCH */
+$("globalSearch").addEventListener("input", event => {
+  const targets = {
+    news:"newsSearch",
+    tv:"tvSearch",
+    radio:"radioSearch",
+    movies:"movieSearch"
+  };
+
+  const target = targets[state.page];
+  if (!target) return;
+
+  $(target).value = event.target.value;
+  $(target).dispatchEvent(new Event("input"));
 });
 
-bindChange("tvCategory", value => {
-  state.tvCategory = value;
-  state.tvPage = 1;
-  renderTV();
-});
-
-bindChange("radioCountry", value => {
-  state.radioCountry = value;
-  state.radioPage = 1;
-  renderRadio();
-});
-
-bindChange("radioLanguage", value => {
-  state.radioLanguage = value;
-  state.radioPage = 1;
-  renderRadio();
-});
-
-bindChange("newsSource", value => {
-  state.newsSource = value;
-  state.newsPage = 1;
-  renderNews();
-});
-
-/* BUTTONS */
-
-$("tvMore")?.addEventListener("click", () => {
-  state.tvPage++;
-  renderTV();
-});
-
-$("radioMore")?.addEventListener("click", () => {
-  state.radioPage++;
-  renderRadio();
-});
-
-$("newsMore")?.addEventListener("click", () => {
-  state.newsPage++;
-  renderNews();
-});
-
-$("movieMore")?.addEventListener("click", () => {
-  state.moviePage++;
-  renderMovies();
-});
-
-$("refreshTV")?.addEventListener("click", loadTV);
-$("refreshRadio")?.addEventListener("click", loadRadio);
-$("refreshNews")?.addEventListener("click", loadNews);
-$("refreshMovies")?.addEventListener("click", loadMovies);
-
-/* START WEBSITE */
-
-document.addEventListener("DOMContentLoaded", () => {
-  setText("year", new Date().getFullYear());
-
-  navigate("home");
-
-  loadTV();
-  loadRadio();
-  loadNews();
-  loadMovies();
-
-  console.log("ITT NEWS website started successfully.");
-});
+/* Initial page */
+navigate("home");
