@@ -4,166 +4,207 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1220">
-  <title>ITT NEWS - Global TV & Radio</title>
+  <meta name="theme-color" content="#08111f">
+  <meta name="description" content="ITT NEWS - World News, Live TV, Radio and Movies">
+  <title>ITT NEWS | World Media</title>
 
   <link rel="stylesheet" href="styles.css">
+
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script defer src="app.js"></script>
 </head>
 
 <body>
-  <header class="topbar">
-    <a href="#" class="brand" data-page="home">
-      <span>ITT</span> NEWS
-    </a>
 
-    <input id="globalSearch" type="search"
-      placeholder="Search TV or Radio...">
-  </header>
+<header class="topbar">
+  <a class="brand" href="#" data-page="home">
+    <span class="brand-logo">ITT</span> NEWS
+  </a>
 
-  <nav class="navigation">
+  <button id="menuToggle" class="menu-toggle">☰</button>
+
+  <nav id="mainNav">
     <button class="nav-btn active" data-page="home">Home</button>
+    <button class="nav-btn" data-page="news">News</button>
     <button class="nav-btn" data-page="tv">Live TV</button>
     <button class="nav-btn" data-page="radio">Radio</button>
+    <button class="nav-btn" data-page="movies">Movies</button>
   </nav>
 
-  <main>
-    <!-- HOME -->
-    <section id="home" class="page active">
-      <div class="hero">
-        <p class="eyebrow">WORLD MEDIA • GLOBAL STREAMING</p>
+  <input id="globalSearch" type="search"
+    placeholder="Search TV and Radio...">
+</header>
 
-        <h1>Your world.<br>
-          <span>Your stations.</span>
-        </h1>
+<main class="container">
 
-        <p>
-          Discover television channels and radio stations
-          from different countries around the world.
-        </p>
-
-        <div class="hero-buttons">
-          <button class="primary-btn" data-page="tv">
-            Explore Live TV
-          </button>
-
-          <button class="secondary-btn" data-page="radio">
-            Listen to Radio
-          </button>
-        </div>
-      </div>
-
-      <div class="statistics">
-        <div class="stat">
-          <strong id="tvCount">Loading...</strong>
-          <span>TV channels</span>
-        </div>
-
-        <div class="stat">
-          <strong id="radioCount">Loading...</strong>
-          <span>Radio stations</span>
-        </div>
-      </div>
-
-      <p class="notice">
-        ITT NEWS displays publicly listed media streams.
-        Availability depends on the broadcaster and stream provider.
+  <!-- HOME -->
+  <section id="home" class="page active">
+    <div class="hero">
+      <p class="eyebrow">YOUR WORLD. ONE PLATFORM.</p>
+      <h1>Welcome to <span>ITT NEWS</span></h1>
+      <p>
+        Watch available live TV, listen to radio stations,
+        follow world news and discover movies.
       </p>
-    </section>
 
-    <!-- TV -->
-    <section id="tv" class="page">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">WORLD TELEVISION</p>
-          <h2>Live TV</h2>
-        </div>
-        <span id="tvStatus">Loading TV channels...</span>
+      <div class="hero-actions">
+        <button class="primary" data-page="news">Explore News</button>
+        <button class="secondary" data-page="tv">Watch Live TV</button>
       </div>
+    </div>
 
-      <div class="tv-player-box">
-        <video id="tvPlayer" controls playsinline></video>
+    <h2>Explore ITT NEWS</h2>
 
-        <div class="playing-info">
-          <h3 id="tvTitle">Choose a TV channel</h3>
-          <p id="tvMessage">
-            Select a channel below to start watching.
-          </p>
-        </div>
-      </div>
-
-      <div class="filters">
-        <input id="tvSearch" type="search"
-          placeholder="Search TV channels...">
-
-        <select id="tvCountry">
-          <option value="">All countries</option>
-        </select>
-
-        <select id="tvCategory">
-          <option value="">All categories</option>
-        </select>
-      </div>
-
-      <div id="tvGrid" class="channel-grid"></div>
-
-      <button id="tvMore" class="load-more" hidden>
-        Load more TV channels
+    <div class="feature-grid">
+      <button class="feature-card" data-page="news">
+        <span>🌍</span>
+        <h3>Latest News</h3>
+        <p>Read international headlines.</p>
       </button>
-    </section>
 
-    <!-- RADIO -->
-    <section id="radio" class="page">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">WORLD RADIO</p>
-          <h2>Radio Stations</h2>
-        </div>
-        <span id="radioStatus">Loading radio stations...</span>
-      </div>
-
-      <div class="radio-player-box">
-        <div class="radio-art">
-          ITT
-          <small>WORLD RADIO</small>
-        </div>
-
-        <div class="radio-controls">
-          <audio id="radioPlayer" controls></audio>
-
-          <h3 id="radioTitle">Choose a radio station</h3>
-
-          <p id="radioMessage">
-            Select a station below to listen.
-          </p>
-        </div>
-      </div>
-
-      <div class="filters">
-        <input id="radioSearch" type="search"
-          placeholder="Search radio stations...">
-
-        <select id="radioCountry">
-          <option value="">All countries</option>
-        </select>
-
-        <select id="radioLanguage">
-          <option value="">All languages</option>
-        </select>
-      </div>
-
-      <div id="radioGrid" class="channel-grid"></div>
-
-      <button id="radioMore" class="load-more" hidden>
-        Load more radio stations
+      <button class="feature-card" data-page="tv">
+        <span>📺</span>
+        <h3>Live TV</h3>
+        <p>Watch available television streams.</p>
       </button>
-    </section>
-  </main>
 
-  <footer>
-    <span>© <span id="year"></span> ITT NEWS</span>
-    <span>World Media Directory</span>
-  </footer>
+      <button class="feature-card" data-page="radio">
+        <span>📻</span>
+        <h3>World Radio</h3>
+        <p>Listen to radio stations.</p>
+      </button>
+
+      <button class="feature-card" data-page="movies">
+        <span>🎬</span>
+        <h3>Movies</h3>
+        <p>Discover available films.</p>
+      </button>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat"><strong id="homeNewsCount">0</strong><span>News</span></div>
+      <div class="stat"><strong id="tvCount">0</strong><span>TV Channels</span></div>
+      <div class="stat"><strong id="radioCount">0</strong><span>Radio Stations</span></div>
+      <div class="stat"><strong id="movieCount">0</strong><span>Movies</span></div>
+    </div>
+  </section>
+
+  <!-- NEWS -->
+  <section id="news" class="page">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">WORLD HEADLINES</p>
+        <h1>Latest <span>News</span></h1>
+      </div>
+      <button class="secondary" id="refreshNews">↻ Refresh</button>
+    </div>
+
+    <div class="toolbar">
+      <input id="newsSearch" type="search" placeholder="Search news...">
+      <select id="newsSource">
+        <option value="">All sources</option>
+      </select>
+    </div>
+
+    <p id="newsStatus" class="status">Loading news...</p>
+    <div id="newsGrid" class="news-grid"></div>
+    <button id="newsMore" class="secondary load-more" hidden>Load more news</button>
+  </section>
+
+  <!-- TV -->
+  <section id="tv" class="page">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">WATCH ONLINE</p>
+        <h1>Live <span>TV</span></h1>
+      </div>
+      <button class="secondary" id="refreshTV">↻ Refresh</button>
+    </div>
+
+    <div class="player-panel">
+      <video id="tvPlayer" controls playsinline></video>
+      <h2 id="tvTitle">Select a TV channel</h2>
+      <p id="tvMessage" class="status">Choose a channel below.</p>
+    </div>
+
+    <div class="toolbar">
+      <input id="tvSearch" type="search" placeholder="Search TV channels...">
+      <select id="tvCountry"><option value="">All countries</option></select>
+      <select id="tvCategory"><option value="">All categories</option></select>
+    </div>
+
+    <p id="tvStatus" class="status">Loading TV channels...</p>
+    <div id="tvGrid" class="media-grid"></div>
+    <button id="tvMore" class="secondary load-more" hidden>Load more TV</button>
+  </section>
+
+  <!-- RADIO -->
+  <section id="radio" class="page">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">LISTEN ONLINE</p>
+        <h1>World <span>Radio</span></h1>
+      </div>
+      <button class="secondary" id="refreshRadio">↻ Refresh</button>
+    </div>
+
+    <div class="audio-panel">
+      <div class="radio-icon">♫</div>
+      <div class="audio-content">
+        <h2 id="radioTitle">Select a radio station</h2>
+        <p id="radioMessage" class="status">Choose a station below.</p>
+        <audio id="radioPlayer" controls></audio>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <input id="radioSearch" type="search" placeholder="Search radio stations...">
+      <select id="radioCountry"><option value="">All countries</option></select>
+      <select id="radioLanguage"><option value="">All languages</option></select>
+    </div>
+
+    <p id="radioStatus" class="status">Loading radio stations...</p>
+    <div id="radioGrid" class="media-grid"></div>
+    <button id="radioMore" class="secondary load-more" hidden>Load more radio</button>
+  </section>
+
+  <!-- MOVIES -->
+  <section id="movies" class="page">
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">FILM COLLECTION</p>
+        <h1>Movies & <span>Films</span></h1>
+      </div>
+      <button class="secondary" id="refreshMovies">↻ Refresh</button>
+    </div>
+
+    <p class="notice">
+      Films are sourced from Internet Archive. Check the rights
+      and availability of each film before reuse or redistribution.
+    </p>
+
+    <div class="movie-player-panel" id="moviePlayerPanel" hidden>
+      <video id="moviePlayer" controls playsinline></video>
+      <h2 id="movieTitle">Now playing</h2>
+      <p id="movieMessage" class="status"></p>
+    </div>
+
+    <div class="toolbar">
+      <input id="movieSearch" type="search" placeholder="Search movies...">
+    </div>
+
+    <p id="movieStatus" class="status">Loading movies...</p>
+    <div id="movieGrid" class="media-grid"></div>
+    <button id="movieMore" class="secondary load-more" hidden>Load more movies</button>
+  </section>
+
+</main>
+
+<footer>
+  <h3>ITT NEWS</h3>
+  <p>World News • Live TV • Radio • Movies</p>
+  <p>© <span id="year"></span> ITT NEWS</p>
+</footer>
+
 </body>
 </html>
