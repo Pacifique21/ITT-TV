@@ -1,547 +1,643 @@
 
+/* =========================================================
+   ITT NEWS - COMPLETE APP.JS
+   Works with the IDs in the supplied index.html
+   ========================================================= */
+
 "use strict";
 
-/* =====================================================
-   ITT NEWS - COMPLETE APPLICATION
-   Compatible with the new ITT-TV index.html
-   News | Sports | TV | Radio | Movies | 12 Languages
-===================================================== */
-
-/* ================= CONFIGURATION ================= */
+/* -------------------- CONFIGURATION -------------------- */
 
 const CONFIG = {
   newsPerPage: 10,
-  rssService: "https://api.rss2json.com/v1/api.json?rss_url=",
+  requestTimeout: 15000,
 
-  feeds: {
-    world: "https://feeds.bbci.co.uk/news/world/rss.xml",
-    africa: "https://feeds.bbci.co.uk/news/world/africa/rss.xml",
-    business: "https://feeds.bbci.co.uk/news/business/rss.xml",
-    technology: "https://feeds.bbci.co.uk/news/technology/rss.xml",
-    sports: "https://feeds.bbci.co.uk/sport/rss.xml"
+  newsFeeds: {
+    world: [
+      "https://feeds.bbci.co.uk/news/world/rss.xml"
+    ],
+    africa: [
+      "https://feeds.bbci.co.uk/news/world/africa/rss.xml"
+    ],
+    business: [
+      "https://feeds.bbci.co.uk/news/business/rss.xml"
+    ],
+    technology: [
+      "https://feeds.bbci.co.uk/news/technology/rss.xml"
+    ],
+    sports: [
+      "https://feeds.bbci.co.uk/sport/rss.xml"
+    ]
   }
 };
 
-/* ================= APP STATE ================= */
+/* -------------------- ELEMENT HELPERS -------------------- */
 
-const state = {
-  news: [],
-  filteredNews: [],
-  newsPage: 1,
-  newsCategory: "world",
-  newsSearch: "",
-  movieSearch: "",
-  movieCategory: "all",
-  language: "en",
-  currentHls: null
-};
+const $ = (id) => document.getElementById(id);
 
-/* ================= TV CHANNELS ================= */
-
-const tvChannels = [
-  {
-    name: "RBA TV",
-    country: "Rwanda",
-    streamUrl: "",
-    officialUrl: "https://www.rba.co.rw/tv"
-  },
-  {
-    name: "TV10",
-    country: "Rwanda",
-    streamUrl: "",
-    officialUrl: "https://radiotv10.rw/tvpage/"
-  },
-  {
-    name: "Flash TV",
-    country: "Rwanda",
-    streamUrl: "",
-    officialUrl: "https://flash.rw/flash-tv-live/"
-  }
-];
-
-/* ================= RADIO CHANNELS ================= */
-
-const radioChannels = [
-  {
-    name: "Radio 10",
-    country: "Rwanda",
-    streamUrl:
-      "https://radio10rwanda-atunwadigital.streamguys1.com/Radio10Rwanda",
-    officialUrl: "https://radiotv10.rw/radio/"
-  },
-  {
-    name: "KT Radio",
-    country: "Rwanda",
-    streamUrl: "",
-    officialUrl: "https://ktradio.rw/"
-  },
-  {
-    name: "Isango Star",
-    country: "Rwanda",
-    streamUrl: "",
-    officialUrl: "https://isangostar.rw/"
-  },
-  {
-    name: "Flash Radio",
-    country: "Rwanda",
-    streamUrl: "",
-    officialUrl: "https://flash.rw/"
-  },
-  {
-    name: "Radio Rwanda",
-    country: "Rwanda",
-    streamUrl: "",
-    officialUrl: "https://www.rba.co.rw/"
-  }
-];
-
-/* ================= MOVIES ================= */
-
-const movies = [
-  {
-    title: "Big Buck Bunny",
-    year: "2008",
-    category: "Animation",
-    image: "https://i.ytimg.com/vi/aqz-KE-bpKQ/hqdefault.jpg",
-    video: "https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ",
-    description: "An animated short film."
-  },
-  {
-    title: "Sintel",
-    year: "2010",
-    category: "Animation",
-    image: "https://i.ytimg.com/vi/eRsGyueVLvQ/hqdefault.jpg",
-    video: "https://www.youtube-nocookie.com/embed/eRsGyueVLvQ",
-    description: "An animated fantasy short film."
-  },
-  {
-    title: "Tears of Steel",
-    year: "2012",
-    category: "Science Fiction",
-    image: "https://i.ytimg.com/vi/R6MlUcmOul8/hqdefault.jpg",
-    video: "https://www.youtube-nocookie.com/embed/R6MlUcmOul8",
-    description: "A science-fiction short film."
-  }
-];
-
-/* ================= TRANSLATIONS ================= */
-
-const translations = {
-  en: {
-    home: "Home", news: "News", sports: "Sports",
-    tv: "Live TV", radio: "Radio", movies: "Movies"
-  },
-  rw: {
-    home: "Ahabanza", news: "Amakuru", sports: "Imikino",
-    tv: "Televiziyo", radio: "Radiyo", movies: "Filime"
-  },
-  fr: {
-    home: "Accueil", news: "Actualités", sports: "Sports",
-    tv: "Télévision", radio: "Radio", movies: "Films"
-  },
-  sw: {
-    home: "Nyumbani", news: "Habari", sports: "Michezo",
-    tv: "Televisheni", radio: "Redio", movies: "Filamu"
-  },
-  es: {
-    home: "Inicio", news: "Noticias", sports: "Deportes",
-    tv: "Televisión", radio: "Radio", movies: "Películas"
-  },
-  pt: {
-    home: "Início", news: "Notícias", sports: "Desporto",
-    tv: "Televisão", radio: "Rádio", movies: "Filmes"
-  },
-  ar: {
-    home: "الرئيسية", news: "الأخبار", sports: "رياضة",
-    tv: "التلفزيون", radio: "راديو", movies: "أفلام"
-  },
-  de: {
-    home: "Startseite", news: "Nachrichten", sports: "Sport",
-    tv: "Fernsehen", radio: "Radio", movies: "Filme"
-  },
-  it: {
-    home: "Home", news: "Notizie", sports: "Sport",
-    tv: "Televisione", radio: "Radio", movies: "Film"
-  },
-  zh: {
-    home: "首页", news: "新闻", sports: "体育",
-    tv: "电视", radio: "广播", movies: "电影"
-  },
-  hi: {
-    home: "होम", news: "समाचार", sports: "खेल",
-    tv: "टीवी", radio: "रेडियो", movies: "फिल्में"
-  },
-  ja: {
-    home: "ホーム", news: "ニュース", sports: "スポーツ",
-    tv: "テレビ", radio: "ラジオ", movies: "映画"
-  }
-};
-
-/* ================= HELPERS ================= */
-
-function $(id) {
-  return document.getElementById(id);
-}
-
-function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, character => ({
+const escapeHTML = (value = "") =>
+  String(value).replace(/[&<>"']/g, (character) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
     '"': "&quot;",
     "'": "&#039;"
   })[character]);
+
+function safeURL(value) {
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol)
+      ? url.href
+      : "";
+  } catch {
+    return "";
+  }
 }
 
-function cleanDescription(value) {
-  const temporary = document.createElement("div");
-  temporary.innerHTML = value || "";
-  return temporary.textContent || temporary.innerText || "";
-}
-
-function setMessage(id, message) {
+function setText(id, value) {
   const element = $(id);
-  if (element) element.textContent = message;
+  if (element) element.textContent = value;
 }
 
-/* =====================================================
-   NAVIGATION
-===================================================== */
+/* -------------------- APPLICATION STATE -------------------- */
 
-function showSection(sectionName, updateHash = true) {
-  const sections = document.querySelectorAll(".page-section");
+const state = {
+  currentSection: "home",
+  newsCategory: "world",
+  news: [],
+  sports: [],
+  currentPage: 1,
+  searchTerm: "",
+  language: "en",
+  newsRequest: 0,
+  activeTV: null,
+  activeRadio: null,
+  hls: null
+};
 
-  sections.forEach(section => {
-    section.hidden = section.id !== sectionName;
-  });
+/* -------------------- LANGUAGE SUPPORT -------------------- */
 
-  const target = $(sectionName);
+const translations = {
+  en: {
+    home: "Home",
+    news: "News",
+    sports: "Sports",
+    tv: "Live TV",
+    radio: "Radio",
+    movies: "Movies"
+  },
+  rw: {
+    home: "Ahabanza",
+    news: "Amakuru",
+    sports: "Imikino",
+    tv: "Televiziyo",
+    radio: "Radiyo",
+    movies: "Filime"
+  },
+  fr: {
+    home: "Accueil",
+    news: "Actualités",
+    sports: "Sports",
+    tv: "Télévision",
+    radio: "Radio",
+    movies: "Films"
+  },
+  sw: {
+    home: "Nyumbani",
+    news: "Habari",
+    sports: "Michezo",
+    tv: "Televisheni",
+    radio: "Redio",
+    movies: "Filamu"
+  },
+  es: {
+    home: "Inicio",
+    news: "Noticias",
+    sports: "Deportes",
+    tv: "Televisión",
+    radio: "Radio",
+    movies: "Películas"
+  },
+  pt: {
+    home: "Início",
+    news: "Notícias",
+    sports: "Desporto",
+    tv: "Televisão",
+    radio: "Rádio",
+    movies: "Filmes"
+  },
+  de: {
+    home: "Startseite",
+    news: "Nachrichten",
+    sports: "Sport",
+    tv: "Fernsehen",
+    radio: "Radio",
+    movies: "Filme"
+  },
+  ar: {
+    home: "الرئيسية",
+    news: "الأخبار",
+    sports: "الرياضة",
+    tv: "التلفزيون",
+    radio: "الراديو",
+    movies: "الأفلام"
+  },
+  zh: {
+    home: "首页",
+    news: "新闻",
+    sports: "体育",
+    tv: "电视",
+    radio: "广播",
+    movies: "电影"
+  },
+  hi: {
+    home: "होम",
+    news: "समाचार",
+    sports: "खेल",
+    tv: "टीवी",
+    radio: "रेडियो",
+    movies: "फ़िल्में"
+  },
+  ja: {
+    home: "ホーム",
+    news: "ニュース",
+    sports: "スポーツ",
+    tv: "テレビ",
+    radio: "ラジオ",
+    movies: "映画"
+  },
+  it: {
+    home: "Home",
+    news: "Notizie",
+    sports: "Sport",
+    tv: "Televisione",
+    radio: "Radio",
+    movies: "Film"
+  }
+};
 
-  if (!target) {
-    console.error("Section not found:", sectionName);
-    return;
+/* -------------------- NAVIGATION -------------------- */
+
+function showSection(section, updateURL = true) {
+  const allowed = [
+    "home",
+    "news",
+    "sports",
+    "tv",
+    "radio",
+    "movies"
+  ];
+
+  if (!allowed.includes(section)) {
+    section = "home";
   }
 
-  document.querySelectorAll("[data-section]").forEach(link => {
-    link.classList.toggle(
-      "active",
-      link.dataset.section === sectionName
-    );
+  state.currentSection = section;
+
+  document.querySelectorAll(".page-section").forEach((element) => {
+    const active = element.id === section;
+
+    element.hidden = !active;
+    element.classList.toggle("active", active);
   });
 
-  if (updateHash && location.hash !== "#" + sectionName) {
-    history.replaceState(null, "", "#" + sectionName);
+  document.querySelectorAll("[data-section]").forEach((link) => {
+    const active = link.dataset.section === section;
+
+    link.classList.toggle("active", active);
+    link.setAttribute("aria-current", active ? "page" : "false");
+  });
+
+  if (updateURL) {
+    history.replaceState(null, "", `#${section}`);
   }
 
-  window.scrollTo({ top: 0, behavior: "smooth" });
-
-  if (sectionName === "news" && state.news.length === 0) {
+  if (section === "news" && state.news.length === 0) {
     loadNews(state.newsCategory);
   }
 
-  if (sectionName === "sports" && state.newsCategory !== "sports") {
-    loadSports();
+  if (section === "sports" && state.sports.length === 0) {
+    loadNews("sports");
   }
 
-  if (sectionName === "tv") renderTV();
-  if (sectionName === "radio") renderRadio();
-  if (sectionName === "movies") renderMovies();
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function setupNavigation() {
-  document.querySelectorAll("[data-section]").forEach(link => {
-    link.addEventListener("click", event => {
+  document.querySelectorAll("[data-section]").forEach((link) => {
+    link.addEventListener("click", (event) => {
       event.preventDefault();
-      showSection(link.dataset.section);
+
+      const section = link.dataset.section;
+      showSection(section);
+
+      if (section === "sports") {
+        loadNews("sports");
+      }
     });
+  });
+
+  window.addEventListener("hashchange", () => {
+    const section = location.hash.replace("#", "") || "home";
+    showSection(section, false);
   });
 }
 
-/* =====================================================
-   NEWS
-===================================================== */
+/* -------------------- NEWS FUNCTIONS -------------------- */
 
-async function loadNews(category = "world") {
-  state.newsCategory = category;
+function normalizeNewsItem(item, sourceName = "News") {
+  const title = item.title || item.name || "News update";
+  const link = safeURL(item.link || item.url || "");
+  const description = item.description || item.content || "";
+  const image =
+    item.thumbnail ||
+    item.enclosure?.link ||
+    item.image ||
+    "";
 
-  const grid = $("newsGrid");
-  const status = $("newsStatus");
+  return {
+    title: String(title).trim(),
+    description: String(description).replace(/<[^>]*>/g, "").trim(),
+    link,
+    image: safeURL(image),
+    date: item.pubDate || item.published || item.date || "",
+    source: sourceName
+  };
+}
 
-  if (grid) grid.innerHTML = "";
-  if (status) status.textContent = "Loading latest news...";
-
-  const feed = CONFIG.feeds[category] || CONFIG.feeds.world;
-  const url = CONFIG.rssService + encodeURIComponent(feed);
+async function fetchRSS(feedURL) {
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    CONFIG.requestTimeout
+  );
 
   try {
-    const response = await fetch(url);
+    const endpoint =
+      "https://api.rss2json.com/v1/api.json?rss_url=" +
+      encodeURIComponent(feedURL);
+
+    const response = await fetch(endpoint, {
+      signal: controller.signal
+    });
 
     if (!response.ok) {
-      throw new Error("News service returned an error.");
+      throw new Error(`RSS request failed: ${response.status}`);
     }
 
     const result = await response.json();
 
     if (result.status !== "ok" || !Array.isArray(result.items)) {
-      throw new Error("No news articles received.");
+      throw new Error("RSS feed did not return valid news.");
     }
 
-    state.news = result.items.map(item => ({
-      title: item.title || "Untitled article",
-      description: cleanDescription(item.description),
-      image: item.thumbnail || item.enclosure?.link || "",
-      link: item.link || "",
-      date: item.pubDate || "",
-      category
-    }));
+    return result.items.map((item) =>
+      normalizeNewsItem(item, result.feed?.title || "News")
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 
-    state.newsSearch = $("newsSearch")?.value.trim().toLowerCase() || "";
+async function loadNews(category = "world") {
+  const requestNumber = ++state.newsRequest;
 
-    applyNewsSearch();
+  state.newsCategory = category;
+  state.currentPage = 1;
 
-    if (status) {
-      status.textContent = state.news.length
-        ? `${state.news.length} news articles available.`
-        : "No news articles found.";
-    }
+  const feeds = CONFIG.newsFeeds[category] || CONFIG.newsFeeds.world;
+
+  const grid = category === "sports"
+    ? $("sportsGrid")
+    : $("newsGrid");
+
+  const status = $("newsStatus");
+
+  if (grid) {
+    grid.innerHTML = "<p>Loading news...</p>";
+  }
+
+  if (status) {
+    status.textContent = "Loading latest news...";
+  }
+
+  try {
+    const results = await Promise.allSettled(
+      feeds.map((url) => fetchRSS(url))
+    );
+
+    if (requestNumber !== state.newsRequest) return;
+
+    const articles = results
+      .filter((result) => result.status === "fulfilled")
+      .flatMap((result) => result.value);
+
+    const unique = [];
+    const seen = new Set();
+
+    articles.forEach((article) => {
+      const key = article.link || article.title;
+
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(article);
+      }
+    });
 
     if (category === "sports") {
+      state.sports = unique;
       renderSports();
+    } else {
+      state.news = unique;
+      renderNews();
+    }
+
+    if (status) {
+      status.textContent = unique.length
+        ? `${unique.length} news stories available.`
+        : "No news could be loaded. Please try again.";
     }
 
   } catch (error) {
     console.error("News loading error:", error);
 
-    if (status) {
-      status.textContent =
-        "Unable to load news right now. Please refresh and try again.";
-    }
+    if (requestNumber !== state.newsRequest) return;
 
     if (grid) {
-      grid.innerHTML = `
-        <p class="muted">
-          News service is temporarily unavailable.
-        </p>
-      `;
+      grid.innerHTML =
+        "<p>News could not be loaded. Check your internet connection and try again.</p>";
     }
 
-    if (category === "sports") {
-      const sportsGrid = $("sportsGrid");
-      if (sportsGrid) {
-        sportsGrid.textContent = "Sports news is temporarily unavailable.";
-      }
+    if (status) {
+      status.textContent = "Unable to load news.";
     }
   }
 }
 
-function applyNewsSearch() {
-  const search = state.newsSearch;
+function getFilteredNews() {
+  const term = state.searchTerm.toLowerCase();
 
-  state.filteredNews = state.news.filter(item =>
-    item.title.toLowerCase().includes(search) ||
-    item.description.toLowerCase().includes(search)
-  );
+  return state.news.filter((article) => {
+    return (
+      article.title.toLowerCase().includes(term) ||
+      article.description.toLowerCase().includes(term) ||
+      article.source.toLowerCase().includes(term)
+    );
+  });
+}
 
-  state.newsPage = 1;
-  renderNews();
+function newsCard(article) {
+  const image = article.image
+    ? `<img src="${escapeHTML(article.image)}" alt="" loading="lazy">`
+    : "";
+
+  const date = article.date
+    ? new Date(article.date).toLocaleDateString()
+    : "";
+
+  const link = article.link
+    ? `<a href="${escapeHTML(article.link)}" target="_blank" rel="noopener noreferrer">Read full story</a>`
+    : "";
+
+  return `
+    <article class="news-card">
+      ${image}
+      <div class="news-card-content">
+        <small>${escapeHTML(article.source)} ${date ? "· " + escapeHTML(date) : ""}</small>
+        <h3>${escapeHTML(article.title)}</h3>
+        <p>${escapeHTML(article.description.slice(0, 240))}</p>
+        ${link}
+      </div>
+    </article>
+  `;
 }
 
 function renderNews() {
   const grid = $("newsGrid");
   if (!grid) return;
 
-  const start = (state.newsPage - 1) * CONFIG.newsPerPage;
+  const filtered = getFilteredNews();
+  const start = (state.currentPage - 1) * CONFIG.newsPerPage;
+  const pageItems = filtered.slice(start, start + CONFIG.newsPerPage);
 
-  const items = state.filteredNews.slice(
-    start,
-    start + CONFIG.newsPerPage
-  );
+  grid.innerHTML = pageItems.length
+    ? pageItems.map(newsCard).join("")
+    : "<p>No news found.</p>";
 
-  if (!items.length) {
-    grid.innerHTML = `<p class="muted">No news found.</p>`;
-    renderPagination();
-    return;
-  }
-
-  grid.innerHTML = items.map(item => `
-    <article class="news-card">
-
-      ${item.image ? `
-        <img
-          src="${escapeHTML(item.image)}"
-          alt="${escapeHTML(item.title)}"
-          loading="lazy"
-          onerror="this.style.display='none'"
-        >
-      ` : ""}
-
-      <div class="news-content">
-
-        <small>${escapeHTML(item.category.toUpperCase())}</small>
-
-        <h3>${escapeHTML(item.title)}</h3>
-
-        <p>
-          ${escapeHTML(item.description.slice(0, 220))}
-        </p>
-
-        <small>${escapeHTML(item.date)}</small>
-
-        ${item.link ? `
-          <a
-            href="${escapeHTML(item.link)}"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read full story
-          </a>
-        ` : ""}
-
-      </div>
-    </article>
-  `).join("");
-
-  renderPagination();
+  renderPagination(filtered.length);
 }
 
-function renderPagination() {
+function renderSports() {
+  const grid = $("sportsGrid");
+  if (!grid) return;
+
+  grid.innerHTML = state.sports.length
+    ? state.sports.map(newsCard).join("")
+    : "<p>No sports news available at the moment.</p>";
+}
+
+function renderPagination(totalItems) {
   const container = $("newsPagination");
   if (!container) return;
 
-  const totalPages = Math.ceil(
-    state.filteredNews.length / CONFIG.newsPerPage
-  );
+  const totalPages = Math.ceil(totalItems / CONFIG.newsPerPage);
 
   if (totalPages <= 1) {
     container.innerHTML = "";
     return;
   }
 
-  container.innerHTML = `
-    <button id="previousNewsPage"
-      ${state.newsPage === 1 ? "disabled" : ""}>
+  let html = "";
+
+  html += `
+    <button type="button" data-page="${state.currentPage - 1}"
+      ${state.currentPage === 1 ? "disabled" : ""}>
       Previous
     </button>
+  `;
 
-    <span>
-      Page ${state.newsPage} of ${totalPages}
-    </span>
+  for (let page = 1; page <= totalPages; page++) {
+    html += `
+      <button type="button" data-page="${page}"
+        ${page === state.currentPage ? 'aria-current="page"' : ""}>
+        ${page}
+      </button>
+    `;
+  }
 
-    <button id="nextNewsPage"
-      ${state.newsPage >= totalPages ? "disabled" : ""}>
+  html += `
+    <button type="button" data-page="${state.currentPage + 1}"
+      ${state.currentPage === totalPages ? "disabled" : ""}>
       Next
     </button>
   `;
 
-  $("previousNewsPage")?.addEventListener("click", () => {
-    if (state.newsPage > 1) {
-      state.newsPage--;
-      renderNews();
-    }
-  });
+  container.innerHTML = html;
 
-  $("nextNewsPage")?.addEventListener("click", () => {
-    if (state.newsPage < totalPages) {
-      state.newsPage++;
-      renderNews();
-    }
+  container.querySelectorAll("[data-page]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const page = Number(button.dataset.page);
+
+      if (page >= 1 && page <= totalPages) {
+        state.currentPage = page;
+        renderNews();
+
+        $("news")?.scrollIntoView({ behavior: "smooth" });
+      }
+    });
   });
 }
 
-function setupNewsControls() {
-  document.querySelectorAll("[data-news-category]").forEach(button => {
-    button.addEventListener("click", () => {
-      document.querySelectorAll("[data-news-category]").forEach(item => {
-        item.classList.remove("active");
-      });
+/* -------------------- NEWS CONTROLS -------------------- */
 
-      button.classList.add("active");
-      loadNews(button.dataset.newsCategory);
-    });
+function setupNewsControls() {
+  $("newsSearch")?.addEventListener("input", (event) => {
+    state.searchTerm = event.target.value.trim();
+    state.currentPage = 1;
+    renderNews();
   });
 
-  $("newsSearch")?.addEventListener("input", event => {
-    state.newsSearch = event.target.value.toLowerCase().trim();
-    applyNewsSearch();
+  document.querySelectorAll("[data-news-category]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const category = button.dataset.newsCategory;
+
+      document.querySelectorAll("[data-news-category]").forEach((item) => {
+        item.classList.toggle("active", item === button);
+      });
+
+      loadNews(category);
+    });
   });
 
   $("refreshNews")?.addEventListener("click", () => {
     loadNews(state.newsCategory);
   });
+
+  $("openSportsNews")?.addEventListener("click", () => {
+    showSection("sports");
+    loadNews("sports");
+  });
 }
 
-/* =====================================================
-   SPORTS
-===================================================== */
+/* -------------------- TV CHANNELS -------------------- */
 
-function renderSports() {
-  const container = $("sportsGrid");
-  if (!container) return;
+/*
+  Add a real broadcaster-authorized stream URL or embed URL
+  when one is available. Do not use a broadcaster homepage
+  as if it were a direct video stream.
+*/
 
-  const items = state.news.slice(0, 10);
-
-  if (!items.length) {
-    container.innerHTML = `<p class="muted">No sports news available.</p>`;
-    return;
+const tvChannels = [
+  {
+    name: "RBA TV",
+    country: "Rwanda",
+    streamUrl: "",
+    embedUrl: "",
+    website: "https://www.rba.co.rw/"
+  },
+  {
+    name: "TV10 Rwanda",
+    country: "Rwanda",
+    streamUrl: "",
+    embedUrl: "",
+    website: "https://www.tv10.rw/"
+  },
+  {
+    name: "Flash TV",
+    country: "Rwanda",
+    streamUrl: "",
+    embedUrl: "",
+    website: "https://www.flashfm.rw/"
   }
-
-  container.innerHTML = items.map(item => `
-    <article class="news-card">
-      ${item.image ? `
-        <img
-          src="${escapeHTML(item.image)}"
-          alt="${escapeHTML(item.title)}"
-          loading="lazy"
-        >
-      ` : ""}
-
-      <div class="news-content">
-        <h3>${escapeHTML(item.title)}</h3>
-        <p>${escapeHTML(item.description.slice(0, 180))}</p>
-        ${item.link ? `
-          <a href="${escapeHTML(item.link)}"
-             target="_blank"
-             rel="noopener noreferrer">
-            Read sports news
-          </a>
-        ` : ""}
-      </div>
-    </article>
-  `).join("");
-}
-
-function loadSports() {
-  loadNews("sports");
-}
-
-$("openSportsNews")?.addEventListener("click", () => {
-  showSection("news");
-  loadNews("sports");
-});
-
-/* =====================================================
-   TV PLAYER
-===================================================== */
+];
 
 function stopTV() {
   const player = $("tvPlayer");
   const frame = $("tvOfficialFrame");
 
-  if (state.currentHls) {
-    state.currentHls.destroy();
-    state.currentHls = null;
-  }
-
   if (player) {
     player.pause();
     player.removeAttribute("src");
     player.load();
-    player.hidden = true;
   }
 
   if (frame) {
     frame.src = "about:blank";
     frame.hidden = true;
+  }
+
+  if (state.hls) {
+    state.hls.destroy();
+    state.hls = null;
+  }
+}
+
+function playTV(channel) {
+  stopTV();
+
+  state.activeTV = channel;
+
+  const player = $("tvPlayer");
+  const frame = $("tvOfficialFrame");
+  const message = $("tvPlayerMessage");
+
+  setText("tvNowPlaying", channel.name);
+
+  if (channel.streamUrl && player) {
+    player.hidden = false;
+    player.src = channel.streamUrl;
+
+    if (
+      channel.streamUrl.includes(".m3u8") &&
+      window.Hls &&
+      Hls.isSupported()
+    ) {
+      state.hls = new Hls();
+      state.hls.loadSource(channel.streamUrl);
+      state.hls.attachMedia(player);
+
+      state.hls.on(Hls.Events.ERROR, (_, data) => {
+        if (data.fatal) {
+          setText("tvPlayerMessage", "This TV stream is unavailable.");
+        }
+      });
+    } else {
+      player.load();
+    }
+
+    player.play().catch(() => {
+      setText("tvPlayerMessage", "Press play to start this TV stream.");
+    });
+
+    if (message) message.textContent = "";
+    return;
+  }
+
+  if (channel.embedUrl && frame) {
+    frame.hidden = false;
+    frame.src = channel.embedUrl;
+
+    if (message) {
+      message.textContent = "If the broadcaster allows embedding, the TV will play here.";
+    }
+    return;
+  }
+
+  if (message) {
+    message.textContent =
+      `${channel.name} has no verified direct stream or embed link yet. Visit its official website.`;
+  }
+
+  if (channel.website) {
+    const link = document.createElement("a");
+    link.href = channel.website;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Open official TV website";
+
+    message?.appendChild(document.createTextNode(" "));
+    message?.appendChild(link);
   }
 }
 
@@ -551,90 +647,117 @@ function renderTV() {
 
   container.innerHTML = tvChannels.map((channel, index) => `
     <article class="channel-card">
-
       <h3>${escapeHTML(channel.name)}</h3>
-
       <p>${escapeHTML(channel.country)}</p>
-
-      <button type="button" data-tv="${index}">
-        Watch TV
+      <button type="button" data-tv-index="${index}">
+        Watch
       </button>
-
-      <a
-        href="${escapeHTML(channel.officialUrl)}"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <a href="${escapeHTML(channel.website)}"
+         target="_blank" rel="noopener noreferrer">
         Official website
       </a>
-
     </article>
   `).join("");
 
-  container.querySelectorAll("[data-tv]").forEach(button => {
+  container.querySelectorAll("[data-tv-index]").forEach((button) => {
     button.addEventListener("click", () => {
-      playTV(Number(button.dataset.tv));
+      playTV(tvChannels[Number(button.dataset.tvIndex)]);
     });
   });
 }
 
-function playTV(index) {
-  const channel = tvChannels[index];
-  if (!channel) return;
+/* -------------------- RADIO CHANNELS -------------------- */
 
-  stopTV();
+const radioChannels = [
+  {
+    name: "Radio 10 Rwanda",
+    country: "Rwanda",
+    streamUrl: "https://radio10rwanda-atunwadigital.streamguys1.com/Radio10Rwanda",
+    website: "https://radio10.rw/"
+  },
+  {
+    name: "KISS FM Rwanda",
+    country: "Rwanda",
+    streamUrl: "",
+    website: "https://www.kissfm.rw/"
+  },
+  {
+    name: "Flash FM",
+    country: "Rwanda",
+    streamUrl: "",
+    website: "https://www.flashfm.rw/"
+  },
+  {
+    name: "BBC World Service",
+    country: "International",
+    streamUrl: "",
+    website: "https://www.bbc.com/audio"
+  },
+  {
+    name: "Deutsche Welle",
+    country: "International",
+    streamUrl: "",
+    website: "https://www.dw.com/"
+  }
+];
 
-  const player = $("tvPlayer");
-  const frame = $("tvOfficialFrame");
+function stopRadio() {
+  const player = $("radioPlayer");
+  if (!player) return;
 
-  setMessage("tvNowPlaying", channel.name);
-  setMessage("tvPlayerMessage", "Opening channel...");
+  player.pause();
+  player.removeAttribute("src");
+  player.load();
+}
+
+function playRadio(channel) {
+  stopRadio();
+
+  state.activeRadio = channel;
+
+  const player = $("radioPlayer");
+  const frame = $("radioOfficialFrame");
+  const message = $("radioPlayerMessage");
+
+  setText("radioNowPlaying", channel.name);
+
+  if (frame) {
+    frame.src = "about:blank";
+    frame.hidden = true;
+  }
 
   if (channel.streamUrl && player) {
     player.hidden = false;
     player.src = channel.streamUrl;
+    player.load();
 
-    const isHls = channel.streamUrl.includes(".m3u8");
+    player.play().then(() => {
+      if (message) message.textContent = "";
+    }).catch(() => {
+      if (message) {
+        message.textContent =
+          "This radio stream could not start. The stream may be unavailable or may block playback.";
+      }
+    });
 
-    if (isHls && window.Hls && Hls.isSupported()) {
-      state.currentHls = new Hls();
-      state.currentHls.loadSource(channel.streamUrl);
-      state.currentHls.attachMedia(player);
-
-      state.currentHls.on(Hls.Events.MANIFEST_PARSED, () => {
-        player.play().catch(console.warn);
-      });
-
-      state.currentHls.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-          setMessage("tvPlayerMessage", "Unable to play this TV stream.");
-        }
-      });
-
-    } else {
-      player.play().catch(error => {
-        console.error("TV playback error:", error);
-        setMessage("tvPlayerMessage", "TV playback failed.");
-      });
-    }
-
-    if (frame) frame.hidden = true;
     return;
   }
 
-  if (frame) {
-    frame.hidden = false;
-    frame.src = channel.officialUrl;
-    setMessage(
-      "tvPlayerMessage",
-      "If the broadcaster blocks embedding, open its official website."
-    );
+  if (message) {
+    message.textContent =
+      `${channel.name} does not have a verified direct audio stream in this version.`;
+  }
+
+  if (channel.website && message) {
+    const link = document.createElement("a");
+    link.href = channel.website;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Open official radio website";
+    message.appendChild(document.createTextNode(" "));
+    message.appendChild(link);
   }
 }
-
-/* =====================================================
-   RADIO PLAYER
-===================================================== */
 
 function renderRadio() {
   const container = $("radioChannels");
@@ -642,170 +765,108 @@ function renderRadio() {
 
   container.innerHTML = radioChannels.map((channel, index) => `
     <article class="channel-card">
-
       <h3>${escapeHTML(channel.name)}</h3>
-
       <p>${escapeHTML(channel.country)}</p>
-
-      <button type="button" data-radio="${index}">
-        Listen Now
+      <button type="button" data-radio-index="${index}">
+        Listen
       </button>
-
-      <a
-        href="${escapeHTML(channel.officialUrl)}"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <a href="${escapeHTML(channel.website)}"
+         target="_blank" rel="noopener noreferrer">
         Official website
       </a>
-
     </article>
   `).join("");
 
-  container.querySelectorAll("[data-radio]").forEach(button => {
+  container.querySelectorAll("[data-radio-index]").forEach((button) => {
     button.addEventListener("click", () => {
-      playRadio(Number(button.dataset.radio));
+      playRadio(radioChannels[Number(button.dataset.radioIndex)]);
     });
   });
 }
 
-function playRadio(index) {
-  const channel = radioChannels[index];
-  if (!channel) return;
+/* -------------------- MOVIES -------------------- */
 
-  const player = $("radioPlayer");
-  const frame = $("radioOfficialFrame");
+/*
+  These are public sample films from the Blender Foundation.
+  Replace or add only films that are legally available to embed.
+*/
 
-  if (player) {
-    player.pause();
-    player.removeAttribute("src");
-    player.load();
-    player.hidden = false;
+const movies = [
+  {
+    title: "Big Buck Bunny",
+    category: "Animation",
+    description: "A public animated short film from the Blender Foundation.",
+    video: "https://www.youtube-nocookie.com/embed/aqz-KE-bpKQ"
+  },
+  {
+    title: "Sintel",
+    category: "Adventure",
+    description: "An open movie produced by the Blender Foundation.",
+    video: "https://www.youtube-nocookie.com/embed/eRsGyueVLvQ"
+  },
+  {
+    title: "Tears of Steel",
+    category: "Sci-Fi",
+    description: "A science-fiction short film from the Blender Foundation.",
+    video: "https://www.youtube-nocookie.com/embed/R6MlUcmOul8"
   }
-
-  if (frame) {
-    frame.src = "about:blank";
-    frame.hidden = true;
-  }
-
-  setMessage("radioNowPlaying", channel.name);
-  setMessage("radioPlayerMessage", "Connecting to radio...");
-
-  if (channel.streamUrl && player) {
-    player.src = channel.streamUrl;
-    player.load();
-
-    player.play().then(() => {
-      setMessage("radioPlayerMessage", "Radio is playing.");
-    }).catch(error => {
-      console.error("Radio playback error:", error);
-
-      setMessage(
-        "radioPlayerMessage",
-        "Playback could not start. Press the play button or check the stream."
-      );
-    });
-
-    return;
-  }
-
-  if (player) player.hidden = true;
-
-  if (frame) {
-    frame.hidden = false;
-    frame.src = channel.officialUrl;
-  }
-
-  setMessage(
-    "radioPlayerMessage",
-    "This station uses its official website. Embedding may be restricted."
-  );
-}
-
-/* =====================================================
-   MOVIES
-===================================================== */
+];
 
 function renderMovies() {
   const container = $("movieGrid");
   if (!container) return;
 
-  const filtered = movies.filter(movie => {
-    const matchesSearch = movie.title.toLowerCase()
-      .includes(state.movieSearch);
+  const search = $("movieSearch")?.value.toLowerCase().trim() || "";
+  const category = $("movieCategory")?.value || "all";
+
+  const filtered = movies.filter((movie) => {
+    const matchesSearch =
+      movie.title.toLowerCase().includes(search) ||
+      movie.description.toLowerCase().includes(search);
 
     const matchesCategory =
-      state.movieCategory === "all" ||
-      movie.category === state.movieCategory;
+      category === "all" || movie.category === category;
 
     return matchesSearch && matchesCategory;
   });
 
-  if (!filtered.length) {
-    container.innerHTML = `<p class="muted">No movies found.</p>`;
-    return;
-  }
-
-  container.innerHTML = filtered.map(movie => {
-    const index = movies.indexOf(movie);
-
-    return `
+  container.innerHTML = filtered.length
+    ? filtered.map((movie, index) => `
       <article class="movie-card">
-
-        <img
-          src="${escapeHTML(movie.image)}"
-          alt="${escapeHTML(movie.title)}"
-          loading="lazy"
-        >
-
-        <h3>${escapeHTML(movie.title)}</h3>
-
-        <p>
-          ${escapeHTML(movie.year)}
-          ·
-          ${escapeHTML(movie.category)}
-        </p>
-
-        <button type="button" data-movie="${index}">
-          Watch Movie
-        </button>
-
+        <div class="movie-thumbnail">
+          <span>▶</span>
+        </div>
+        <div class="movie-card-content">
+          <small>${escapeHTML(movie.category)}</small>
+          <h3>${escapeHTML(movie.title)}</h3>
+          <p>${escapeHTML(movie.description)}</p>
+          <button type="button" data-movie-index="${movies.indexOf(movie)}">
+            Watch movie
+          </button>
+        </div>
       </article>
-    `;
-  }).join("");
+    `).join("")
+    : "<p>No movies found.</p>";
 
-  container.querySelectorAll("[data-movie]").forEach(button => {
+  container.querySelectorAll("[data-movie-index]").forEach((button) => {
     button.addEventListener("click", () => {
-      playMovie(Number(button.dataset.movie));
+      openMovie(movies[Number(button.dataset.movieIndex)]);
     });
   });
 }
 
-function playMovie(index) {
-  const movie = movies[index];
-  if (!movie) return;
-
+function openMovie(movie) {
   const viewer = $("movieViewer");
   const frame = $("movieFrame");
 
   if (!viewer || !frame) return;
 
-  $("movieViewerTitle").textContent = movie.title;
-  $("movieViewerDescription").textContent = movie.description;
+  setText("movieViewerTitle", movie.title);
+  setText("movieViewerDescription", movie.description);
 
-  frame.innerHTML = `
-    <iframe
-      src="${escapeHTML(movie.video)}"
-      title="${escapeHTML(movie.title)}"
-      width="100%"
-      height="450"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen
-      loading="lazy">
-    </iframe>
-  `;
-
+  frame.src = movie.video;
   viewer.hidden = false;
+
   viewer.scrollIntoView({ behavior: "smooth" });
 }
 
@@ -813,71 +874,80 @@ function closeMovie() {
   const viewer = $("movieViewer");
   const frame = $("movieFrame");
 
-  if (frame) frame.innerHTML = "";
-  if (viewer) viewer.hidden = true;
+  if (frame) {
+    frame.src = "about:blank";
+  }
+
+  if (viewer) {
+    viewer.hidden = true;
+  }
 }
 
 function setupMovieControls() {
-  $("movieSearch")?.addEventListener("input", event => {
-    state.movieSearch = event.target.value.toLowerCase().trim();
-    renderMovies();
-  });
-
-  $("movieCategory")?.addEventListener("change", event => {
-    state.movieCategory = event.target.value;
-    renderMovies();
-  });
-
+  $("movieSearch")?.addEventListener("input", renderMovies);
+  $("movieCategory")?.addEventListener("change", renderMovies);
   $("closeMovie")?.addEventListener("click", closeMovie);
 }
 
-/* =====================================================
-   LANGUAGES
-===================================================== */
+/* -------------------- LANGUAGE SELECTOR -------------------- */
 
 function setupLanguages() {
-  const select = $("languageSelect");
-  if (!select) return;
+  const selector = $("languageSelect");
+  if (!selector) return;
 
-  select.value = state.language;
-
-  select.addEventListener("change", event => {
-    state.language = event.target.value;
-    translateNavigation();
+  selector.addEventListener("change", () => {
+    state.language = selector.value;
+    applyLanguage();
   });
+
+  applyLanguage();
 }
 
-function translateNavigation() {
-  const words = translations[state.language] || translations.en;
+function applyLanguage() {
+  const dictionary = translations[state.language] || translations.en;
 
-  document.querySelectorAll(".nav [data-section]").forEach(link => {
-    const key = link.dataset.section;
+  document.querySelectorAll("[data-section]").forEach((element) => {
+    const key = element.dataset.section;
 
-    if (words[key]) {
-      link.textContent = words[key];
+    if (dictionary[key]) {
+      element.textContent = dictionary[key];
     }
   });
 }
 
-/* =====================================================
-   FOOTER AND TICKER
-===================================================== */
-
-function setupFooter() {
-  const year = $("currentYear");
-  if (year) year.textContent = new Date().getFullYear();
-}
+/* -------------------- TICKER -------------------- */
 
 function setupTicker() {
   const ticker = $("tickerText");
-  if (!ticker) return;
 
-  ticker.textContent = "Welcome to ITT NEWS - World Media.";
+  if (ticker) {
+    ticker.textContent =
+      "ITT NEWS | World News | Africa | Sports | Technology | Business | Entertainment";
+  }
 }
 
-/* =====================================================
-   START APPLICATION
-===================================================== */
+/* -------------------- FOOTER -------------------- */
+
+function setupFooter() {
+  const year = $("currentYear");
+
+  if (year) {
+    year.textContent = new Date().getFullYear();
+  }
+}
+
+/* -------------------- CLEANUP -------------------- */
+
+window.addEventListener("beforeunload", () => {
+  stopTV();
+  stopRadio();
+
+  if (state.hls) {
+    state.hls.destroy();
+  }
+});
+
+/* -------------------- INITIALIZATION -------------------- */
 
 function initializeApp() {
   console.log("ITT NEWS application initialized.");
@@ -893,12 +963,35 @@ function initializeApp() {
   renderRadio();
   renderMovies();
 
-  showSection(
-    location.hash.replace("#", "") || "home",
-    false
-  );
+  const requestedSection =
+    location.hash.replace("#", "") || "home";
 
-  loadNews("world");
+  const validSections = [
+    "home",
+    "news",
+    "sports",
+    "tv",
+    "radio",
+    "movies"
+  ];
+
+  const section = validSections.includes(requestedSection)
+    ? requestedSection
+    : "home";
+
+  /*
+    Show the requested section without triggering
+    another news request from showSection().
+  */
+  showSection(section, false);
+
+  if (section === "sports") {
+    loadNews("sports");
+  } else if (section === "news") {
+    loadNews(state.newsCategory);
+  } else {
+    loadNews("world");
+  }
 }
 
 if (document.readyState === "loading") {
