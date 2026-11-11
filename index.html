@@ -1,170 +1,164 @@
-
 <!DOCTYPE html>
-<html lang="rw">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#08111f">
-  <title>ITT NEWS | Rwanda & World Media</title>
+  <meta name="description" content="ITT NEWS - News, live radio, television and movies.">
+  <title>ITT NEWS | World Media</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <header class="topbar">
+    <a class="brand" href="#home" data-page="home">ITT<span>NEWS</span></a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Open menu">☰</button>
+    <nav id="mainNav">
+      <button class="nav-link active" data-page="home">Home</button>
+      <button class="nav-link" data-page="news">News</button>
+      <button class="nav-link" data-page="tv">Live TV</button>
+      <button class="nav-link" data-page="radio">Live Radio</button>
+      <button class="nav-link" data-page="movies">Movies</button>
+    </nav>
+  </header>
 
-<header class="topbar">
-  <a class="brand" href="#" data-page="home">
-    <span class="brand-logo">ITT</span> NEWS
-  </a>
-  <button class="menu-toggle" id="menuToggle" aria-label="Open menu">☰</button>
-  <nav id="mainNav">
-    <button class="nav-btn active" data-page="home">Home</button>
-    <button class="nav-btn" data-page="news">News</button>
-    <button class="nav-btn" data-page="tv">Live TV</button>
-    <button class="nav-btn" data-page="radio">Radio</button>
-    <button class="nav-btn" data-page="movies">Movies</button>
-  </nav>
-</header>
-
-<main class="container">
-
-  <section id="home" class="page active">
-    <div class="hero">
-      <p class="eyebrow">RWANDA • AFRICA • THE WORLD</p>
-      <h1>Welcome to <span>ITT NEWS</span></h1>
-      <p>Watch live television, listen to radio, read the latest news and discover movies.</p>
-      <div class="hero-actions">
-        <button class="primary" data-go="tv">Watch Live TV</button>
-        <button class="secondary" data-go="news">Read News</button>
+  <main class="container">
+    <section class="page active" id="home">
+      <div class="hero">
+        <div>
+          <p class="eyebrow">YOUR WORLD. YOUR NEWS.</p>
+          <h1>Welcome to <span>ITT NEWS</span></h1>
+          <p>Follow news, watch television, listen to live radio and explore movies in one place.</p>
+          <div class="hero-actions">
+            <button class="primary-btn" data-go="news">Explore News</button>
+            <button class="secondary-btn" data-go="radio">Listen Live</button>
+          </div>
+        </div>
+        <div class="hero-symbol">ITT<br><span>NEWS</span></div>
       </div>
-    </div>
 
-    <h2>Explore our services</h2>
-    <div class="feature-grid">
-      <button class="feature-card" data-go="news">
-        <span>🌍</span><h3>News</h3><p>Rwanda and international headlines.</p>
-      </button>
-      <button class="feature-card" data-go="tv">
-        <span>📺</span><h3>Live TV</h3><p>Find available television streams.</p>
-      </button>
-      <button class="feature-card" data-go="radio">
-        <span>📻</span><h3>Radio</h3><p>Listen to stations from Rwanda and beyond.</p>
-      </button>
-      <button class="feature-card" data-go="movies">
-        <span>🎬</span><h3>Movies</h3><p>Browse films available to watch.</p>
-      </button>
-    </div>
-
-    <div class="home-panels">
-      <div class="mini-panel">
-        <h3>🇷🇼 Rwanda Media</h3>
-        <p>Find local news, television and radio.</p>
-        <button class="secondary" data-go="radio">Explore Rwanda Radio</button>
+      <h2 class="section-title">Explore ITT NEWS</h2>
+      <div class="feature-grid">
+        <button class="feature-card" data-go="news"><span>📰</span><h3>Latest News</h3><p>Read news and updates.</p></button>
+        <button class="feature-card" data-go="tv"><span>📺</span><h3>Live TV</h3><p>Watch available TV streams.</p></button>
+        <button class="feature-card" data-go="radio"><span>📻</span><h3>Live Radio</h3><p>Listen to radio stations.</p></button>
+        <button class="feature-card" data-go="movies"><span>🎬</span><h3>Movies</h3><p>Watch available films.</p></button>
       </div>
-      <div class="mini-panel">
-        <h3>🌐 World Media</h3>
-        <p>Explore international news and channels.</p>
-        <button class="secondary" data-go="news">Explore World News</button>
+
+      <div class="home-panel">
+        <div>
+          <p class="eyebrow">LIVE RADIO</p>
+          <h2>Listen to stations from Rwanda and around the world.</h2>
+          <p>Open the radio section to search for stations and play their live streams.</p>
+        </div>
+        <button class="primary-btn" data-go="radio">Open Radio</button>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <section id="news" class="page">
-    <div class="page-heading">
-      <div><p class="eyebrow">RWANDA AND THE WORLD</p><h1>Latest <span>News</span></h1></div>
-      <button class="secondary" id="refreshNews">↻ Refresh</button>
-    </div>
-    <p id="newsStatus" class="status">Loading news...</p>
-    <div class="toolbar">
-      <input id="newsSearch" type="search" placeholder="Search headlines...">
-      <select id="newsCategory">
-        <option value="all">All news</option>
-        <option value="Rwanda">Rwanda</option>
-        <option value="World">World</option>
-      </select>
-    </div>
-    <div id="newsGrid" class="news-grid"></div>
-    <button class="primary load-more" id="moreNews">Load more news</button>
-  </section>
-
-  <section id="tv" class="page">
-    <div class="page-heading">
-      <div><p class="eyebrow">WATCH ONLINE</p><h1>Live <span>TV</span></h1></div>
-      <button class="secondary" id="refreshTV">↻ Refresh</button>
-    </div>
-
-    <div class="player-panel">
-      <video id="tvPlayer" controls playsinline preload="none"></video>
-      <h3 id="tvNow">Choose a television channel</h3>
-      <p id="tvStatus" class="status">Choose a channel below. The player will try to start it here.</p>
-      <a id="tvExternal" class="external-link" href="#" target="_blank" rel="noopener" hidden>Open broadcaster website ↗</a>
-    </div>
-
-    <div class="toolbar">
-      <input id="tvSearch" type="search" placeholder="Search channel name...">
-      <select id="tvRegion">
-        <option value="all">All countries</option>
-        <option value="RW">Rwanda</option>
-      </select>
-    </div>
-    <div id="tvGrid" class="media-grid"></div>
-    <button class="primary load-more" id="moreTV">Load more channels</button>
-  </section>
-
-  <section id="radio" class="page">
-    <div class="page-heading">
-      <div><p class="eyebrow">LISTEN ONLINE</p><h1>Live <span>Radio</span></h1></div>
-      <button class="secondary" id="refreshRadio">↻ Refresh</button>
-    </div>
-
-    <div class="audio-panel">
-      <div class="radio-icon">📻</div>
-      <div class="audio-content">
-        <h3 id="radioNow">Choose a radio station</h3>
-        <p id="radioStatus" class="status">Choose a station below.</p>
-        <audio id="radioPlayer" controls preload="none"></audio>
-        <a id="radioExternal" class="external-link" href="#" target="_blank" rel="noopener" hidden>Open station website ↗</a>
+    <section class="page" id="news">
+      <div class="page-heading">
+        <div><p class="eyebrow">STAY INFORMED</p><h1>Latest News</h1><p>News links and updates from different publishers.</p></div>
       </div>
-    </div>
+      <div class="filter-row">
+        <input id="newsSearch" type="search" placeholder="Search news...">
+        <select id="newsCategory">
+          <option value="all">All categories</option>
+          <option value="Rwanda">Rwanda</option>
+          <option value="World">World</option>
+          <option value="Sports">Sports</option>
+          <option value="Technology">Technology</option>
+        </select>
+      </div>
+      <div id="newsGrid" class="content-grid"></div>
+      <p class="small-note">News cards link to publishers. Headlines shown here are starter examples; replace them with verified current stories before publishing.</p>
+    </section>
 
-    <div class="toolbar">
-      <input id="radioSearch" type="search" placeholder="Search radio station...">
-      <select id="radioRegion">
-        <option value="RW">Rwanda first</option>
-        <option value="all">All countries</option>
-      </select>
-    </div>
-    <div id="radioGrid" class="media-grid"></div>
-    <button class="primary load-more" id="moreRadio">Load more stations</button>
-  </section>
+    <section class="page" id="tv">
+      <div class="page-heading">
+        <div><p class="eyebrow">WATCH ONLINE</p><h1>Live TV</h1><p>Watch television streams inside ITT NEWS when embedding is allowed.</p></div>
+        <span class="live-label"><i></i> TV PLAYER</span>
+      </div>
+      <div class="player-panel">
+        <video id="tvPlayer" controls playsinline></video>
+        <iframe id="tvFrame" title="TV stream" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+        <div id="tvPlaceholder" class="player-placeholder"><span>📺</span><h2>Choose a TV channel</h2><p>Select a channel below to start watching.</p></div>
+        <div id="tvStatus" class="player-status" aria-live="polite">No channel selected.</div>
+      </div>
+      <h2 class="section-title">TV Channels</h2>
+      <div id="tvGrid" class="content-grid"></div>
+      <div class="add-panel">
+        <h3>Add a TV stream</h3>
+        <p>Use a stream URL or an authorised embed URL supplied by the broadcaster.</p>
+        <div class="add-fields">
+          <input id="tvName" placeholder="Channel name">
+          <input id="tvUrl" placeholder="Stream or embed URL (https://...)">
+          <button class="primary-btn" id="addTv">Add channel</button>
+        </div>
+      </div>
+    </section>
 
-  <section id="movies" class="page">
-    <div class="page-heading">
-      <div><p class="eyebrow">FILM LIBRARY</p><h1>Free <span>Movies</span></h1></div>
-      <button class="secondary" id="refreshMovies">↻ Refresh</button>
-    </div>
+    <section class="page" id="radio">
+      <div class="page-heading">
+        <div><p class="eyebrow">LISTEN ANYWHERE</p><h1>Live Radio</h1><p>Find radio stations and listen directly on this page.</p></div>
+        <span class="live-label"><i></i> LIVE RADIO</span>
+      </div>
 
-    <div class="movie-player-panel">
-      <video id="moviePlayer" controls playsinline preload="metadata"></video>
-      <h3 id="movieNow">Choose a movie</h3>
-      <p id="movieStatus" class="status">Select a film below to play it here.</p>
-    </div>
-    <div class="toolbar">
-      <input id="movieSearch" type="search" placeholder="Search movie title...">
-    </div>
-    <div id="movieGrid" class="media-grid"></div>
-    <button class="primary load-more" id="moreMovies">Load more movies</button>
-    <p class="notice">This section searches films in Internet Archive collections. Playback and reuse depend on each film's rights and available video files.</p>
-  </section>
+      <div class="audio-panel">
+        <div class="radio-icon">📻</div>
+        <div class="audio-content">
+          <p class="eyebrow">NOW PLAYING</p>
+          <h2 id="radioNow">Choose a radio station</h2>
+          <p id="radioStatus" aria-live="polite">Radio player is ready.</p>
+          <audio id="radioPlayer" controls preload="none"></audio>
+          <p id="radioDetails" class="small-note">Select a station below to listen.</p>
+        </div>
+      </div>
 
-</main>
+      <div class="filter-row">
+        <input id="radioSearch" type="search" placeholder="Search radio station or country...">
+        <select id="radioRegion">
+          <option value="RW">Rwanda</option>
+          <option value="all">All countries</option>
+        </select>
+        <button class="secondary-btn" id="refreshRadio">Refresh</button>
+      </div>
+      <div id="radioGrid" class="content-grid"></div>
+      <button class="secondary-btn load-more" id="moreRadio" hidden>Load more stations</button>
+      <p class="small-note">Some stations may be offline or may block playback in certain browsers. Try another station if one does not play.</p>
+    </section>
 
-<footer>
-  <h3>ITT NEWS</h3>
-  <p>Rwanda • Africa • World</p>
-  <p>News | Live TV | Radio | Movies</p>
-  <small>© 2026 ITT NEWS</small>
-</footer>
+    <section class="page" id="movies">
+      <div class="page-heading">
+        <div><p class="eyebrow">WATCH MOVIES</p><h1>Movies</h1><p>Play films from lawful sources that permit embedding or streaming.</p></div>
+      </div>
+      <div class="filter-row">
+        <input id="movieSearch" type="search" placeholder="Search movies...">
+      </div>
+      <div class="player-panel movie-player-panel">
+        <video id="moviePlayer" controls playsinline></video>
+        <iframe id="movieFrame" title="Movie player" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+        <div id="moviePlaceholder" class="player-placeholder"><span>🎬</span><h2>Select a movie</h2><p>Choose a movie below to play it here.</p></div>
+        <div id="movieStatus" class="player-status" aria-live="polite">No movie selected.</div>
+      </div>
+      <h2 class="section-title">Movie Library</h2>
+      <div id="movieGrid" class="content-grid"></div>
+      <div class="add-panel">
+        <h3>Add a movie</h3>
+        <p>Only add films you own or have permission to share. Use a direct video URL or an authorised embed URL.</p>
+        <div class="add-fields">
+          <input id="movieName" placeholder="Movie title">
+          <input id="movieUrl" placeholder="Video or embed URL (https://...)">
+          <button class="primary-btn" id="addMovie">Add movie</button>
+        </div>
+      </div>
+    </section>
+  </main>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
-<script src="app.js"></script>
+  <footer>
+    <strong>ITT NEWS</strong>
+    <p>News • Live TV • Live Radio • Movies</p>
+    <small>© <span id="year"></span> ITT NEWS</small>
+  </footer>
+
+  <script src="app.js"></script>
 </body>
 </html>
