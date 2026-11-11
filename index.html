@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080d18">
+  <meta name="description" content="ITT NEWS — news, sports, live television, radio and films from around the world.">
+  <title>ITT NEWS — World Media</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+  <script defer src="config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#home" aria-label="ITT NEWS home">ITT<span>NEWS</span></a>
+    <button class="menu-toggle" id="menuToggle" type="button" aria-expanded="false" aria-controls="mainNav">☰</button>
+    <nav class="main-nav" id="mainNav" aria-label="Main navigation">
+      <a href="#home" data-i18n="home">Home</a>
+      <a href="#news" data-i18n="news">News</a>
+      <a href="#sports" data-i18n="sports">Sports</a>
+      <a href="#tv" data-i18n="tv">Live TV</a>
+      <a href="#radio" data-i18n="radio">Radio</a>
+      <a href="#movies" data-i18n="movies">Movies</a>
+    </nav>
+    <div class="header-actions">
+      <label class="sr-only" for="languageSelect">Language</label>
+      <select id="languageSelect" class="language-select">
+        <option value="en">English</option><option value="rw">Kinyarwanda</option>
+        <option value="fr">Français</option><option value="sw">Kiswahili</option>
+        <option value="es">Español</option><option value="pt">Português</option>
+        <option value="ar">العربية</option><option value="zh">中文</option>
+        <option value="hi">हिन्दी</option><option value="de">Deutsch</option>
+        <option value="it">Italiano</option><option value="ja">日本語</option>
+      </select>
+    </div>
+  </header>
+
+  <main id="home">
+    <section class="hero">
+      <div class="hero-content">
+        <p class="eyebrow" data-i18n="eyebrow">RWANDA · AFRICA · THE WORLD</p>
+        <h1 data-i18n="heroTitle">THE WORLD<br><span>IN ONE PLACE</span></h1>
+        <p class="hero-copy" data-i18n="heroCopy">Explore news, sports, live television, radio and films from around the world.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#news" data-i18n="exploreNews">Explore news</a>
+          <a class="button button-secondary" href="#tv" data-i18n="watchLive">Watch live</a>
+        </div>
+      </div>
+      <div class="hero-mark" aria-hidden="true"><span>ITT</span><b>NEWS</b><i>WORLD MEDIA</i></div>
+    </section>
+
+    <section class="quick-links" aria-label="Explore sections">
+      <a href="#news">📰 <span data-i18n="news">News</span></a>
+      <a href="#sports">⚽ <span data-i18n="sports">Sports</span></a>
+      <a href="#tv">📺 <span data-i18n="tv">Live TV</span></a>
+      <a href="#radio">📻 <span data-i18n="radio">Radio</span></a>
+      <a href="#movies">🎬 <span data-i18n="movies">Movies</span></a>
+    </section>
+
+    <section class="section" id="news">
+      <div class="section-heading">
+        <div><p class="eyebrow" data-i18n="latestUpdates">LATEST UPDATES</p><h2 data-i18n="topNews">Top News</h2></div>
+        <span class="section-chip">NEWS</span>
+      </div>
+      <div class="section-toolbar">
+        <p class="muted" data-i18n="newsIntro">Choose a news source to read its latest reports.</p>
+        <input id="newsSearch" class="search-input" type="search" placeholder="Search news sources..." data-i18n-placeholder="searchNews">
+      </div>
+      <div id="newsGrid" class="card-grid"></div>
+    </section>
+
+    <section class="section" id="sports">
+      <div class="section-heading">
+        <div><p class="eyebrow">SPORTS WORLD</p><h2 data-i18n="sportsNews">Sports News</h2></div>
+        <span class="section-chip">SPORTS</span>
+      </div>
+      <p class="muted" data-i18n="sportsIntro">Visit trusted sports publishers for current scores, fixtures and reports.</p>
+      <div id="sportsGrid" class="card-grid"></div>
+    </section>
+
+    <section class="section" id="tv">
+      <div class="section-heading">
+        <div><p class="eyebrow">WATCH FROM ITT NEWS</p><h2 data-i18n="liveTelevision">Live Television</h2></div>
+        <span class="live-indicator">● LIVE</span>
+      </div>
+      <div class="media-layout">
+        <div class="player-card">
+          <div class="player-topline"><strong id="tvNowPlaying">Select a TV channel</strong><span class="player-kind">VIDEO PLAYER</span></div>
+          <div class="video-wrap">
+            <div id="tvPlaceholder" class="player-placeholder"><span>📺</span><p data-i18n="selectTv">Choose a channel from the list</p></div>
+            <video id="tvVideo" controls playsinline preload="none"></video>
+          </div>
+          <p id="tvStatus" class="status" role="status" aria-live="polite">A channel with an authorized direct stream is needed for in-page playback.</p>
+          <a id="tvOfficialLink" class="text-link hidden" href="#" target="_blank" rel="noopener noreferrer">Open broadcaster website ↗</a>
+        </div>
+        <aside class="station-panel">
+          <label class="sr-only" for="tvSearch">Search TV channels</label>
+          <input id="tvSearch" class="search-input" type="search" placeholder="Search TV channels...">
+          <div id="tvList" class="station-list"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="radio">
+      <div class="section-heading">
+        <div><p class="eyebrow">LISTEN FROM ITT NEWS</p><h2 data-i18n="liveRadio">Live Radio</h2></div>
+        <span class="live-indicator">● ON AIR</span>
+      </div>
+      <div class="radio-player player-card">
+        <div class="radio-art" aria-hidden="true">📻</div>
+        <div class="radio-info"><p class="eyebrow">NOW SELECTED</p><h3 id="radioNowPlaying">Choose a radio station</h3><p id="radioCountry" class="muted">World radio directory</p></div>
+        <audio id="radioAudio" controls preload="none"></audio>
+        <p id="radioStatus" class="status full-width" role="status" aria-live="polite">Choose a station. In-page listening requires its authorized direct audio stream.</p>
+        <a id="radioOfficialLink" class="text-link hidden full-width" href="#" target="_blank" rel="noopener noreferrer">Open radio website ↗</a>
+      </div>
+      <div class="section-toolbar">
+        <p class="muted">Radio directory</p>
+        <input id="radioSearch" class="search-input" type="search" placeholder="Search radio stations...">
+      </div>
+      <div id="radioList" class="station-grid"></div>
+    </section>
+
+    <section class="section" id="movies">
+      <div class="section-heading">
+        <div><p class="eyebrow">ENTERTAINMENT</p><h2 data-i18n="movies">Movies</h2></div>
+        <span class="section-chip">FILMS</span>
+      </div>
+      <p class="muted" data-i18n="movieIntro">Films listed here are openly published for online viewing. Availability can vary by host.</p>
+      <div class="movie-layout">
+        <div class="player-card">
+          <div class="player-topline"><strong id="movieNowPlaying">Select a film</strong><span class="player-kind">MOVIE PLAYER</span></div>
+          <video id="movieVideo" controls playsinline preload="metadata"></video>
+          <p id="movieStatus" class="status" role="status" aria-live="polite">Select a film below to play it here.</p>
+        </div>
+        <div id="movieList" class="movie-list"></div>
+      </div>
+    </section>
+
+    <section class="section about-section" id="about">
+      <p class="eyebrow">ABOUT THE PLATFORM</p>
+      <h2>One platform. A world of media.</h2>
+      <p class="muted">ITT NEWS brings together links to broadcasters, publishers and openly available films. Each broadcaster controls its own stream, availability and embedding permissions.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand" href="#home">ITT<span>NEWS</span></a>
+    <p data-i18n="footerText">Your world. Your news.</p>
+    <small>© <span id="currentYear"></span> ITT NEWS</small>
+  </footer>
+</body>
+</html>
