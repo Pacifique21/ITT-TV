@@ -6,127 +6,326 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080d18">
   <meta name="description" content="ITT NEWS - World news, sports, TV, radio and movies.">
+
   <title>ITT NEWS - World Media</title>
+
   <link rel="stylesheet" href="styles.css">
+
+  <!-- HLS support -->
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+  <!-- Main application: only load once -->
   <script defer src="app.js"></script>
 </head>
+
 <body>
+
 <header class="header">
-  <a href="#home" class="brand"><span>ITT</span> NEWS</a>
+  <a href="#home" class="brand">
+    <span>ITT</span> NEWS
+  </a>
+
   <div class="header-tools">
-    <input id="globalSearch" type="search" placeholder="Search news, movies...">
-    <select id="languageSelect" aria-label="Language">
-      <option value="en">English</option><option value="rw">Kinyarwanda</option>
-      <option value="fr">Français</option><option value="sw">Kiswahili</option>
-      <option value="es">Español</option><option value="pt">Português</option>
-      <option value="ar">العربية</option><option value="zh">中文</option>
-      <option value="hi">हिन्दी</option><option value="de">Deutsch</option>
-      <option value="it">Italiano</option><option value="ja">日本語</option>
+    <input
+      id="newsSearch"
+      type="search"
+      placeholder="Search news..."
+      aria-label="Search news"
+    >
+
+    <select id="languageSelect" aria-label="Choose language">
+      <option value="en">English</option>
+      <option value="rw">Kinyarwanda</option>
+      <option value="fr">Français</option>
+      <option value="sw">Kiswahili</option>
+      <option value="es">Español</option>
+      <option value="pt">Português</option>
+      <option value="ar">العربية</option>
+      <option value="de">Deutsch</option>
+      <option value="it">Italiano</option>
+      <option value="zh">中文</option>
+      <option value="hi">हिन्दी</option>
+      <option value="ja">日本語</option>
     </select>
   </div>
 </header>
 
 <nav class="nav">
-  <a href="#home">Home</a><a href="#news">News</a>
-  <a href="#sports">Sports</a><a href="#tv">Live TV</a>
-  <a href="#radio">Radio</a><a href="#movies">Movies</a>
+  <a href="#home" data-section="home">Home</a>
+  <a href="#news" data-section="news">News</a>
+  <a href="#sports" data-section="sports">Sports</a>
+  <a href="#tv" data-section="tv">Live TV</a>
+  <a href="#radio" data-section="radio">Radio</a>
+  <a href="#movies" data-section="movies">Movies</a>
 </nav>
 
-<main id="home">
-  <section class="hero">
-    <div>
-      <p class="eyebrow">WORLD MEDIA • LIVE UPDATES</p>
-      <h1>Your world.<br><span>Your news.</span></h1>
-      <p>News, sports, television, radio and movies from around the world.</p>
-      <a class="primary" href="#news">Explore latest news</a>
+<main>
+
+  <!-- HOME -->
+  <section id="home" class="page-section">
+
+    <div class="hero">
+      <div>
+        <p class="eyebrow">WORLD MEDIA • LIVE UPDATES</p>
+
+        <h1>
+          Your world.<br>
+          <span>Your news.</span>
+        </h1>
+
+        <p>
+          News, sports, television, radio and movies
+          from around the world.
+        </p>
+
+        <a class="primary" href="#news" data-section="news">
+          Explore latest news
+        </a>
+      </div>
+
+      <div class="hero-logo">
+        ITT
+        <br>
+        <small>NEWS</small>
+      </div>
     </div>
-    <div class="hero-logo">ITT<br><small>NEWS</small></div>
+
+    <div class="ticker">
+      <b>ITT UPDATE</b>
+      <span id="tickerText">Welcome to ITT NEWS.</span>
+    </div>
+
   </section>
 
-  <div class="ticker"><b>ITT UPDATE</b><span id="tickerText">Welcome to ITT NEWS.</span></div>
+  <!-- NEWS -->
+  <section class="section page-section" id="news" hidden>
 
-  <section class="section" id="news">
     <div class="heading">
-      <div><p class="eyebrow">WORLD COVERAGE</p><h2>Latest News</h2></div>
-      <button class="outline" id="refreshNews">Refresh</button>
+      <div>
+        <p class="eyebrow">WORLD COVERAGE</p>
+        <h2>Latest News</h2>
+      </div>
+
+      <button class="outline" id="refreshNews">
+        Refresh
+      </button>
     </div>
+
     <div class="categories" id="newsCategories">
-      <button class="category active" data-feed="world">World</button>
-      <button class="category" data-feed="africa">Africa</button>
-      <button class="category" data-feed="business">Business</button>
-      <button class="category" data-feed="technology">Technology</button>
-      <button class="category" data-feed="sports">Sports</button>
+
+      <button class="category active"
+        data-news-category="world">
+        World
+      </button>
+
+      <button class="category"
+        data-news-category="africa">
+        Africa
+      </button>
+
+      <button class="category"
+        data-news-category="business">
+        Business
+      </button>
+
+      <button class="category"
+        data-news-category="technology">
+        Technology
+      </button>
+
+      <button class="category"
+        data-news-category="sports">
+        Sports
+      </button>
+
     </div>
-    <p id="newsStatus" class="muted">Loading news...</p>
+
+    <p id="newsStatus" class="muted">
+      Loading latest news...
+    </p>
+
     <div id="newsGrid" class="news-grid"></div>
+
     <div id="newsPagination" class="pagination"></div>
+
   </section>
 
-  <section class="section alternate" id="sports">
+  <!-- SPORTS -->
+  <section class="section alternate page-section"
+    id="sports" hidden>
+
     <p class="eyebrow">SPORTS AROUND THE WORLD</p>
+
     <h2>Sports</h2>
-    <p class="muted">Latest sports headlines.</p>
-    <button class="primary" id="sportsNewsButton">Show sports news</button>
+
+    <p class="muted">
+      Latest sports news from around the world.
+    </p>
+
+    <div id="sportsGrid"></div>
+
+    <button class="primary" id="openSportsNews">
+      Show sports news
+    </button>
+
   </section>
 
-  <section class="section" id="tv">
-    <p class="eyebrow">WATCH ONLINE</p><h2>Live TV</h2>
+  <!-- LIVE TV -->
+  <section class="section page-section" id="tv" hidden>
+
+    <p class="eyebrow">WATCH ONLINE</p>
+    <h2>Live TV</h2>
+
     <div class="media-layout">
+
       <div class="player-box">
+
         <p class="eyebrow">LIVE TELEVISION</p>
-        <video id="tvPlayer" controls playsinline></video>
-        <iframe id="tvOfficialFrame" class="embedded-player" title="Live TV"
-          allow="autoplay; fullscreen; picture-in-picture" allowfullscreen hidden></iframe>
-        <p id="tvPlayerMessage" class="muted">Choose a TV channel.</p>
+
+        <video
+          id="tvPlayer"
+          controls
+          playsinline
+          hidden
+          style="width:100%;max-width:100%;"
+        ></video>
+
+        <iframe
+          id="tvOfficialFrame"
+          class="embedded-player"
+          title="Live TV"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowfullscreen
+          hidden
+        ></iframe>
+
+        <p id="tvPlayerMessage" class="muted">
+          Choose a TV channel.
+        </p>
+
         <p id="tvNowPlaying" class="accent"></p>
+
       </div>
+
       <div id="tvChannels" class="channel-list"></div>
+
     </div>
+
   </section>
 
-  <section class="section alternate" id="radio">
-    <p class="eyebrow">LISTEN ONLINE</p><h2>World Radio</h2>
+  <!-- RADIO -->
+  <section class="section alternate page-section"
+    id="radio" hidden>
+
+    <p class="eyebrow">LISTEN ONLINE</p>
+
+    <h2>World Radio</h2>
+
     <div class="media-layout">
+
       <div class="player-box">
+
         <div class="radio-art">♫</div>
-        <h3 id="radioNowPlaying">Choose a radio station</h3>
-        <audio id="radioPlayer" controls preload="none"></audio>
-        <iframe id="radioOfficialFrame" class="embedded-player radio-frame"
-          title="Live Radio" allow="autoplay" hidden></iframe>
-        <p id="radioPlayerMessage" class="muted">Choose a station.</p>
+
+        <h3 id="radioNowPlaying">
+          Choose a radio station
+        </h3>
+
+        <audio
+          id="radioPlayer"
+          controls
+          preload="none"
+          style="width:100%;"
+        ></audio>
+
+        <iframe
+          id="radioOfficialFrame"
+          class="embedded-player radio-frame"
+          title="Live Radio"
+          allow="autoplay"
+          hidden
+        ></iframe>
+
+        <p id="radioPlayerMessage" class="muted">
+          Choose a station.
+        </p>
+
+        <p id="radioStatus" class="muted"></p>
+
       </div>
+
       <div id="radioChannels" class="channel-list"></div>
+
     </div>
+
   </section>
 
-  <section class="section" id="movies">
-    <p class="eyebrow">WATCH LEGALLY</p><h2>Movies</h2>
+  <!-- MOVIES -->
+  <section class="section page-section"
+    id="movies" hidden>
+
+    <p class="eyebrow">WATCH LEGALLY</p>
+
+    <h2>Movies</h2>
+
     <div class="movie-tools">
-      <input id="movieSearch" type="search" placeholder="Search movies...">
+
+      <input
+        id="movieSearch"
+        type="search"
+        placeholder="Search movies..."
+      >
+
       <select id="movieCategory">
         <option value="all">All categories</option>
         <option value="Animation">Animation</option>
-        <option value="Science Fiction">Science Fiction</option>
+        <option value="Science Fiction">
+          Science Fiction
+        </option>
       </select>
+
     </div>
+
     <div id="movieGrid" class="movie-grid"></div>
-    <div id="movieViewer" class="movie-viewer" hidden>
+
+    <div id="movieViewer"
+      class="movie-viewer"
+      hidden>
+
       <div class="heading">
         <h3 id="movieViewerTitle">Movie</h3>
-        <button class="outline" id="closeMovie">Close</button>
+
+        <button class="outline" id="closeMovie">
+          Close
+        </button>
       </div>
+
       <div id="movieFrame" class="video-frame"></div>
+
       <p id="movieViewerDescription" class="muted"></p>
+
     </div>
+
   </section>
+
 </main>
 
 <footer class="footer">
-  <a href="#home" class="brand"><span>ITT</span> NEWS</a>
-  <p>World news, sports, TV, radio and movies.</p>
-  <p class="muted">© <span id="currentYear"></span> ITT NEWS</p>
+
+  <a href="#home" class="brand"
+    data-section="home">
+    <span>ITT</span> NEWS
+  </a>
+
+  <p>
+    World news, sports, TV, radio and movies.
+  </p>
+
+  <p class="muted">
+    © <span id="currentYear"></span> ITT NEWS
+  </p>
+
 </footer>
-  <script src="app.js" defer></script>
+
 </body>
 </html>
