@@ -1,210 +1,462 @@
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#08111f">
-  <meta name="description" content="ITT NEWS - World News, Live TV, Radio and Movies">
-  <title>ITT NEWS | World Media</title>
+:root {
+  --bg: #08111f;
+  --panel: #122139;
+  --panel2: #192d47;
+  --text: #f1f6ff;
+  --muted: #9aabc2;
+  --accent: #42d6c5;
+  --border: rgba(255,255,255,.12);
+}
 
-  <link rel="stylesheet" href="styles.css">
+* {
+  box-sizing: border-box;
+}
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <script defer src="app.js"></script>
-</head>
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Arial, sans-serif;
+}
 
-<body>
+button, input, select {
+  font: inherit;
+}
 
-<header class="topbar">
-  <a class="brand" href="#" data-page="home">
-    <span class="brand-logo">ITT</span> NEWS
-  </a>
+button {
+  cursor: pointer;
+}
 
-  <button id="menuToggle" class="menu-toggle">☰</button>
+.topbar {
+  min-height: 75px;
+  padding: 12px 5%;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  background: #0b1728;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
 
-  <nav id="mainNav">
-    <button class="nav-btn active" data-page="home">Home</button>
-    <button class="nav-btn" data-page="news">News</button>
-    <button class="nav-btn" data-page="tv">Live TV</button>
-    <button class="nav-btn" data-page="radio">Radio</button>
-    <button class="nav-btn" data-page="movies">Movies</button>
-  </nav>
+.brand {
+  color: white;
+  text-decoration: none;
+  font-size: 21px;
+  font-weight: 900;
+  white-space: nowrap;
+}
 
-  <input id="globalSearch" type="search"
-    placeholder="Search TV and Radio...">
-</header>
+.brand-logo {
+  display: inline-grid;
+  place-items: center;
+  background: var(--accent);
+  color: #07151d;
+  border-radius: 9px;
+  width: 38px;
+  height: 38px;
+}
 
-<main class="container">
+nav {
+  display: flex;
+  gap: 6px;
+}
 
-  <!-- HOME -->
-  <section id="home" class="page active">
-    <div class="hero">
-      <p class="eyebrow">YOUR WORLD. ONE PLATFORM.</p>
-      <h1>Welcome to <span>ITT NEWS</span></h1>
-      <p>
-        Watch available live TV, listen to radio stations,
-        follow world news and discover movies.
-      </p>
+.nav-btn {
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  padding: 11px;
+  border-radius: 8px;
+}
 
-      <div class="hero-actions">
-        <button class="primary" data-page="news">Explore News</button>
-        <button class="secondary" data-page="tv">Watch Live TV</button>
-      </div>
-    </div>
+.nav-btn:hover,
+.nav-btn.active {
+  background: var(--panel2);
+  color: white;
+}
 
-    <h2>Explore ITT NEWS</h2>
+#globalSearch {
+  margin-left: auto;
+  width: 190px;
+}
 
-    <div class="feature-grid">
-      <button class="feature-card" data-page="news">
-        <span>🌍</span>
-        <h3>Latest News</h3>
-        <p>Read international headlines.</p>
-      </button>
+.menu-toggle {
+  display: none;
+}
 
-      <button class="feature-card" data-page="tv">
-        <span>📺</span>
-        <h3>Live TV</h3>
-        <p>Watch available television streams.</p>
-      </button>
+.container {
+  width: 90%;
+  max-width: 1200px;
+  margin: auto;
+  min-height: 70vh;
+}
 
-      <button class="feature-card" data-page="radio">
-        <span>📻</span>
-        <h3>World Radio</h3>
-        <p>Listen to radio stations.</p>
-      </button>
+.page {
+  display: none;
+  padding: 40px 0 65px;
+}
 
-      <button class="feature-card" data-page="movies">
-        <span>🎬</span>
-        <h3>Movies</h3>
-        <p>Discover available films.</p>
-      </button>
-    </div>
+.page.active {
+  display: block;
+}
 
-    <div class="stats-grid">
-      <div class="stat"><strong id="homeNewsCount">0</strong><span>News</span></div>
-      <div class="stat"><strong id="tvCount">0</strong><span>TV Channels</span></div>
-      <div class="stat"><strong id="radioCount">0</strong><span>Radio Stations</span></div>
-      <div class="stat"><strong id="movieCount">0</strong><span>Movies</span></div>
-    </div>
-  </section>
+.hero {
+  padding: 55px 6%;
+  border-radius: 22px;
+  background: linear-gradient(120deg,#14364a,#102036);
+  margin-bottom: 40px;
+}
 
-  <!-- NEWS -->
-  <section id="news" class="page">
-    <div class="page-heading">
-      <div>
-        <p class="eyebrow">WORLD HEADLINES</p>
-        <h1>Latest <span>News</span></h1>
-      </div>
-      <button class="secondary" id="refreshNews">↻ Refresh</button>
-    </div>
+.eyebrow {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
 
-    <div class="toolbar">
-      <input id="newsSearch" type="search" placeholder="Search news...">
-      <select id="newsSource">
-        <option value="">All sources</option>
-      </select>
-    </div>
+.hero h1 {
+  font-size: clamp(35px,5vw,58px);
+  margin: 15px 0;
+}
 
-    <p id="newsStatus" class="status">Loading news...</p>
-    <div id="newsGrid" class="news-grid"></div>
-    <button id="newsMore" class="secondary load-more" hidden>Load more news</button>
-  </section>
+.hero h1 span,
+.page-heading h1 span {
+  color: var(--accent);
+}
 
-  <!-- TV -->
-  <section id="tv" class="page">
-    <div class="page-heading">
-      <div>
-        <p class="eyebrow">WATCH ONLINE</p>
-        <h1>Live <span>TV</span></h1>
-      </div>
-      <button class="secondary" id="refreshTV">↻ Refresh</button>
-    </div>
+.hero p {
+  color: var(--muted);
+  line-height: 1.7;
+}
 
-    <div class="player-panel">
-      <video id="tvPlayer" controls playsinline></video>
-      <h2 id="tvTitle">Select a TV channel</h2>
-      <p id="tvMessage" class="status">Choose a channel below.</p>
-    </div>
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+}
 
-    <div class="toolbar">
-      <input id="tvSearch" type="search" placeholder="Search TV channels...">
-      <select id="tvCountry"><option value="">All countries</option></select>
-      <select id="tvCategory"><option value="">All categories</option></select>
-    </div>
+.primary,
+.secondary {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px 18px;
+  font-weight: bold;
+}
 
-    <p id="tvStatus" class="status">Loading TV channels...</p>
-    <div id="tvGrid" class="media-grid"></div>
-    <button id="tvMore" class="secondary load-more" hidden>Load more TV</button>
-  </section>
+.primary {
+  background: var(--accent);
+  color: #06151c;
+}
 
-  <!-- RADIO -->
-  <section id="radio" class="page">
-    <div class="page-heading">
-      <div>
-        <p class="eyebrow">LISTEN ONLINE</p>
-        <h1>World <span>Radio</span></h1>
-      </div>
-      <button class="secondary" id="refreshRadio">↻ Refresh</button>
-    </div>
+.secondary {
+  background: var(--panel2);
+  color: white;
+}
 
-    <div class="audio-panel">
-      <div class="radio-icon">♫</div>
-      <div class="audio-content">
-        <h2 id="radioTitle">Select a radio station</h2>
-        <p id="radioMessage" class="status">Choose a station below.</p>
-        <audio id="radioPlayer" controls></audio>
-      </div>
-    </div>
+.feature-grid,
+.stats-grid,
+.media-grid,
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 15px;
+}
 
-    <div class="toolbar">
-      <input id="radioSearch" type="search" placeholder="Search radio stations...">
-      <select id="radioCountry"><option value="">All countries</option></select>
-      <select id="radioLanguage"><option value="">All languages</option></select>
-    </div>
+.feature-card,
+.media-card,
+.news-card,
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 18px;
+}
 
-    <p id="radioStatus" class="status">Loading radio stations...</p>
-    <div id="radioGrid" class="media-grid"></div>
-    <button id="radioMore" class="secondary load-more" hidden>Load more radio</button>
-  </section>
+.feature-card {
+  text-align: left;
+  color: white;
+}
 
-  <!-- MOVIES -->
-  <section id="movies" class="page">
-    <div class="page-heading">
-      <div>
-        <p class="eyebrow">FILM COLLECTION</p>
-        <h1>Movies & <span>Films</span></h1>
-      </div>
-      <button class="secondary" id="refreshMovies">↻ Refresh</button>
-    </div>
+.feature-card span {
+  font-size: 28px;
+}
 
-    <p class="notice">
-      Films are sourced from Internet Archive. Check the rights
-      and availability of each film before reuse or redistribution.
-    </p>
+.feature-card p,
+.media-card p,
+.news-card p,
+.status {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
 
-    <div class="movie-player-panel" id="moviePlayerPanel" hidden>
-      <video id="moviePlayer" controls playsinline></video>
-      <h2 id="movieTitle">Now playing</h2>
-      <p id="movieMessage" class="status"></p>
-    </div>
+.stats-grid {
+  margin-top: 20px;
+}
 
-    <div class="toolbar">
-      <input id="movieSearch" type="search" placeholder="Search movies...">
-    </div>
+.stat strong {
+  display: block;
+  color: var(--accent);
+  font-size: 26px;
+}
 
-    <p id="movieStatus" class="status">Loading movies...</p>
-    <div id="movieGrid" class="media-grid"></div>
-    <button id="movieMore" class="secondary load-more" hidden>Load more movies</button>
-  </section>
+.stat span {
+  color: var(--muted);
+  font-size: 12px;
+}
 
-</main>
+.page-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
 
-<footer>
-  <h3>ITT NEWS</h3>
-  <p>World News • Live TV • Radio • Movies</p>
-  <p>© <span id="year"></span> ITT NEWS</p>
-</footer>
+.page-heading h1 {
+  font-size: 40px;
+  margin: 8px 0;
+}
 
-</body>
-</html>
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
+
+input,
+select {
+  background: #0e1b2d;
+  color: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  min-width: 150px;
+}
+
+.toolbar input {
+  flex: 1;
+}
+
+.player-panel,
+.audio-panel,
+.movie-player-panel {
+  background: #050a11;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 15px;
+  margin: 20px 0;
+}
+
+.player-panel video,
+.movie-player-panel video {
+  width: 100%;
+  max-height: 520px;
+  aspect-ratio: 16/9;
+  background: black;
+  display: block;
+  border-radius: 8px;
+}
+
+.audio-panel {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  background: var(--panel);
+}
+
+.radio-icon {
+  font-size: 42px;
+  color: var(--accent);
+}
+
+.audio-content {
+  flex: 1;
+}
+
+audio {
+  width: 100%;
+  max-width: 600px;
+}
+
+.media-grid {
+  grid-template-columns: repeat(4,minmax(0,1fr));
+}
+
+.media-card {
+  min-width: 0;
+}
+
+.media-thumb {
+  height: 105px;
+  background: var(--panel2);
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.media-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.media-card h3,
+.news-card h3 {
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.card-action {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: var(--accent);
+  color: #06151c;
+  border: 0;
+  border-radius: 7px;
+  font-weight: bold;
+}
+
+.news-grid {
+  grid-template-columns: repeat(3,minmax(0,1fr));
+}
+
+.news-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.news-card .source {
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.news-card a,
+.media-card a {
+  color: var(--accent);
+  font-size: 12px;
+  margin-top: auto;
+}
+
+.load-more {
+  display: block;
+  margin: 25px auto;
+}
+
+.notice {
+  background: #342a17;
+  color: #f2d69c;
+  padding: 13px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.empty {
+  grid-column: 1/-1;
+  padding: 25px;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+}
+
+footer {
+  text-align: center;
+  padding: 30px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+}
+
+footer h3 {
+  color: white;
+  letter-spacing: 3px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+@media(max-width:900px) {
+  .feature-grid,
+  .stats-grid,
+  .media-grid {
+    grid-template-columns: repeat(2,1fr);
+  }
+
+  .news-grid {
+    grid-template-columns: repeat(2,1fr);
+  }
+}
+
+@media(max-width:650px) {
+  .topbar {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .menu-toggle {
+    display: block;
+    margin-left: auto;
+    background: var(--panel2);
+    color: white;
+    border: 0;
+    padding: 9px;
+    border-radius: 7px;
+  }
+
+  nav {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+  }
+
+  nav.open {
+    display: flex;
+  }
+
+  #globalSearch {
+    display: none;
+  }
+
+  .feature-grid,
+  .stats-grid,
+  .media-grid,
+  .news-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .page-heading {
+    align-items: flex-start;
+  }
+
+  .page-heading h1 {
+    font-size: 32px;
+  }
+
+  .toolbar input,
+  .toolbar select {
+    width: 100%;
+  }
+}
+
+@media(max-width:420px) {
+  .feature-grid,
+  .stats-grid,
+  .media-grid,
+  .news-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-actions {
+    flex-wrap: wrap;
+  }
+}
