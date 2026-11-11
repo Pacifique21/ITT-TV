@@ -1,31 +1,63 @@
 
 "use strict";
 
-/* ITT NEWS - Main JavaScript */
+/* =========================================
+   ITT NEWS - COMPLETE MEDIA APPLICATION
+========================================= */
 
-const $ = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
 
 const state = {
+  news: [],
   tv: [],
   radio: [],
-  news: [],
   movies: [],
+  newsLimit: 12,
   tvLimit: 24,
   radioLimit: 24,
-  newsLimit: 12,
   movieLimit: 20,
   hls: null
 };
 
-function escapeHTML(value = "") {
-  return String(value).replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;"
-  })[char]);
+const NEWS_FEEDS = [
+  {name:"RBA Rwanda", region:"Rwanda", url:"https://www.rba.co.rw/news"},
+  {name:"The New Times Rwanda", region:"Rwanda", url:"https://www.newtimes.co.rw/rssFeed/14"},
+  {name:"Kigali Today", region:"Rwanda", url:"https://www.kigalitoday.com/spip.php?page=backend"},
+  {name:"BBC World", region:"World", url:"https://feeds.bbci.co.uk/news/world/rss.xml"},
+  {name:"Al Jazeera", region:"World", url:"https://www.aljazeera.com/xml/rss/all.xml"},
+  {name:"DW News", region:"World", url:"https://rss.dw.com/rdf/rss-en-all"}
+];
+
+const OFFICIAL_LINKS = {
+  "Rwanda TV":"https://www.rba.co.rw/",
+  "TV10":"https://www.radiotv10.rw/",
+  "Radio 10":"https://radiotv10.rw/radio/",
+  "KT Radio":"https://www.ktradio.rw/",
+  "RBA":"https://www.rba.co.rw/"
+};
+
+function escapeHTML(value="") {
+  return String(value).replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
+  })[c]);
 }
+
+function setStatus(id, message) {
+  $(id).textContent = message;
+}
+
+async function getJSON(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw new Error("Request failed: " + response.status);
+  return response.json();
+}
+
+function showEmpty(id, message) {
+  $(id).innerHTML = `<div class="empty">${escapeHTML(message)}</div>`;
+}
+
+/* =============== NAVIGATION =============== */
 
 function showPage(page) {
   document.querySelectorAll(".page").forEach(section => {
@@ -37,7 +69,7 @@ function showPage(page) {
   });
 
   $("mainNav").classList.remove("open");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  window.scrollTo({top:0, behavior:"smooth"});
 }
 
 document.querySelectorAll("[data-page]").forEach(button => {
@@ -55,113 +87,104 @@ $("menuToggle").addEventListener("click", () => {
   $("mainNav").classList.toggle("open");
 });
 
-/* Helper functions */
-
-function setStatus(id, message) {
-  $(id).textContent = message;
-}
-
-function showEmpty(id, message) {
-  $(id).innerHTML = `<div class="empty">${escapeHTML(message)}</div>`;
-}
-
-async function fetchJSON(url) {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error("Network request failed");
-  return response.json();
-}
-
-/* ---------------- NEWS ---------------- */
-
-const newsFeeds = [
-  { name: "BBC", url: "https://feeds.bbci.co.uk/news/world/rss.xml" },
-  { name: "Al Jazeera", url: "https://www.aljazeera.com/xml/rss/all.xml" },
-  { name: "DW", url: "https://rss.dw.com/rdf/rss-en-all" }
-];
+/* =============== NEWS =============== */
 
 async function loadNews() {
-  setStatus("newsStatus", "Loading latest news...");
+  setStatus("newsStatus", "Loading Rwanda and international news...");
   $("newsGrid").innerHTML = "";
 
-  const allNews = [];
+  const results = [];
 
-  for (const feed of newsFeeds) {
+  for (const feed of NEWS_FEEDS) {
     try {
-      const api = "https://api.rss2json.com/v1/api.json?rss_url=" +
+      const proxy = "https://api.rss2json.com/v1/api.json?rss_url=" +
         encodeURIComponent(feed.url);
 
-      const data = await fetchJSON(api);
+      const data = await getJSON(proxy);
 
-      if (data.items) {
+      if (Array.isArray(data.items)) {
         data.items.forEach(item => {
-          allNews.push({
-            title: item.title || "News story",
-            description: item.description || item.content || "",
-            link: item.link || "#",
+          results.push({
+            title: item.title || "News",
+            description: (item.description || item.content || "")
+              .replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim(),
+            link: item.link || feed.url,
             date: item.pubDate || "",
             source: feed.name,
-            image: item.thumbnail || ""
+            region: feed.region
           });
         });
       }
     } catch (error) {
-      console.warn("News source unavailable:", feed.name);
+      console.warn("News feed unavailable:", feed.name, error);
     }
   }
 
-  state.news = allNews;
+  const seen = new Set();
+  state.news = results.filter(item => {
+    const key = item.title.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+
+  state.news.sort((a,b) => new Date(b.date) - new Date(a.date));
   state.newsLimit = 12;
   renderNews();
 
-  if (allNews.length) {
-    setStatus("newsStatus", `${allNews.length} news stories loaded.`);
-  } else {
-    setStatus("newsStatus", "News feeds could not be reached. Check your internet connection or try again later.");
-  }
+  setStatus(
+    "newsStatus",
+    state.news.length
+      ? `${state.news.length} news stories loaded.`
+      : "News feeds did not respond. Check your internet and try Refresh."
+  );
 }
 
 function renderNews() {
   const query = $("newsSearch").value.toLowerCase().trim();
-  const source = $("newsSource").value;
+  const category = $("newsCategory").value;
 
   const filtered = state.news.filter(item =>
-    item.title.toLowerCase().includes(query) &&
-    (source === "all" || item.source === source)
+    (item.title + " " + item.description + " " + item.source)
+      .toLowerCase().includes(query) &&
+    (category === "all" || item.region === category)
   );
 
   const visible = filtered.slice(0, state.newsLimit);
 
   $("newsGrid").innerHTML = visible.map(item => `
     <article class="news-card">
-      <span class="source">${escapeHTML(item.source)}</span>
+      <span class="source">${escapeHTML(item.region)} • ${escapeHTML(item.source)}</span>
       <h3>${escapeHTML(item.title)}</h3>
-      <p>${escapeHTML(item.description.replace(/<[^>]*>/g, "").slice(0, 180))}</p>
-      <a href="${escapeHTML(item.link)}" target="_blank" rel="noopener">Read full story ↗</a>
+      <p>${escapeHTML(item.description.slice(0,190))}</p>
+      <a href="${escapeHTML(item.link)}" target="_blank" rel="noopener noreferrer">
+        Read full story ↗
+      </a>
     </article>
   `).join("");
 
-  if (!visible.length) showEmpty("newsGrid", "No news found.");
+  if (!visible.length) showEmpty("newsGrid", "No news found. Try another search.");
   $("moreNews").hidden = visible.length >= filtered.length;
 }
 
 $("newsSearch").addEventListener("input", renderNews);
-$("newsSource").addEventListener("change", renderNews);
+$("newsCategory").addEventListener("change", renderNews);
 $("moreNews").addEventListener("click", () => {
   state.newsLimit += 12;
   renderNews();
 });
 $("refreshNews").addEventListener("click", loadNews);
 
-/* ---------------- LIVE TV ---------------- */
+/* =============== LIVE TV =============== */
 
 async function loadTV() {
-  setStatus("tvStatus", "Loading TV channels...");
+  setStatus("tvStatus", "Searching live TV channels...");
   $("tvGrid").innerHTML = "";
 
   try {
     const [channels, streams] = await Promise.all([
-      fetchJSON("https://iptv-org.github.io/api/channels.json"),
-      fetchJSON("https://iptv-org.github.io/api/streams.json")
+      getJSON("https://iptv-org.github.io/api/channels.json"),
+      getJSON("https://iptv-org.github.io/api/streams.json")
     ]);
 
     const channelMap = new Map(channels.map(channel => [channel.id, channel]));
@@ -171,145 +194,176 @@ async function loadTV() {
       .map(stream => {
         const channel = channelMap.get(stream.channel) || {};
         return {
+          id: stream.channel,
           name: channel.name || stream.channel,
-          country: channel.country || "Unknown",
+          country: channel.country || "",
           logo: channel.logo || "",
-          url: stream.url
+          url: stream.url,
+          website: channel.website || ""
         };
       });
 
+    state.tv.sort((a,b) => {
+      const aRwanda = a.country === "RW" ? 0 : 1;
+      const bRwanda = b.country === "RW" ? 0 : 1;
+      return aRwanda - bRwanda || a.name.localeCompare(b.name);
+    });
+
     state.tvLimit = 24;
-    fillCountries();
     renderTV();
-    setStatus("tvStatus", `${state.tv.length} TV streams found. Select a channel to play.`);
+
+    setStatus("tvStatus", `${state.tv.length} channels found. Rwanda channels are shown first.`);
   } catch (error) {
     console.error(error);
-    setStatus("tvStatus", "TV channels could not load. Check your internet connection.");
-    showEmpty("tvGrid", "TV list is currently unavailable. Try Refresh.");
+    setStatus("tvStatus", "Could not connect to the TV channel directory.");
+    showEmpty("tvGrid", "TV list unavailable. Check your connection and press Refresh.");
   }
-}
-
-function fillCountries() {
-  const countries = [...new Set(state.tv.map(channel => channel.country))]
-    .filter(Boolean).sort();
-
-  $("tvCountry").innerHTML = '<option value="all">All countries</option>' +
-    countries.map(country =>
-      `<option value="${escapeHTML(country)}">${escapeHTML(country)}</option>`
-    ).join("");
 }
 
 function renderTV() {
   const query = $("tvSearch").value.toLowerCase().trim();
-  const country = $("tvCountry").value;
+  const region = $("tvRegion").value;
 
   const filtered = state.tv.filter(channel =>
-    channel.name.toLowerCase().includes(query) &&
-    (country === "all" || channel.country === country)
+    (channel.name + " " + channel.country).toLowerCase().includes(query) &&
+    (region === "all" || channel.country === region)
   );
 
   const visible = filtered.slice(0, state.tvLimit);
 
-  $("tvGrid").innerHTML = visible.map((channel, index) => `
-    <article class="media-card">
-      <div class="media-thumb">
-        ${channel.logo
-          ? `<img src="${escapeHTML(channel.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`
-          : "📺"}
-      </div>
-      <h3>${escapeHTML(channel.name)}</h3>
-      <p>${escapeHTML(channel.country)}</p>
-      <button class="card-action" data-tv-index="${state.tv.indexOf(channel)}">▶ Watch</button>
-    </article>
-  `).join("");
+  $("tvGrid").innerHTML = visible.map(channel => {
+    const originalIndex = state.tv.indexOf(channel);
+    const logo = channel.logo
+      ? `<img src="${escapeHTML(channel.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      : "📺";
 
-  if (!visible.length) showEmpty("tvGrid", "No channels found.");
+    return `
+      <article class="media-card">
+        <div class="media-thumb">${logo}</div>
+        <h3>${escapeHTML(channel.name)}</h3>
+        <p>${channel.country === "RW" ? "🇷🇼 Rwanda" : escapeHTML(channel.country || "International")}</p>
+        <button class="card-action" data-tv="${originalIndex}">▶ Watch here</button>
+      </article>
+    `;
+  }).join("");
+
+  if (!visible.length) showEmpty("tvGrid", "No channels found for this search.");
+
   $("moreTV").hidden = visible.length >= filtered.length;
 
-  document.querySelectorAll("[data-tv-index]").forEach(button => {
+  document.querySelectorAll("[data-tv]").forEach(button => {
     button.addEventListener("click", () => {
-      playTV(state.tv[Number(button.dataset.tvIndex)]);
+      playTV(state.tv[Number(button.dataset.tv)]);
     });
   });
+}
+
+function stopHLS() {
+  if (state.hls) {
+    state.hls.destroy();
+    state.hls = null;
+  }
 }
 
 function playTV(channel) {
   if (!channel) return;
 
-  const video = $("tvPlayer");
-  const url = channel.url;
+  const player = $("tvPlayer");
+  stopHLS();
 
-  if (state.hls) {
-    state.hls.destroy();
-    state.hls = null;
-  }
-
-  video.pause();
-  video.removeAttribute("src");
-  video.load();
+  player.pause();
+  player.removeAttribute("src");
+  player.load();
 
   $("tvNow").textContent = channel.name;
   setStatus("tvStatus", "Connecting to " + channel.name + "...");
 
+  const fallback = channel.website ||
+    OFFICIAL_LINKS[channel.name] || "";
+
+  $("tvExternal").hidden = !fallback;
+  if (fallback) $("tvExternal").href = fallback;
+
+  const url = channel.url;
+
+  player.onerror = () => {
+    setStatus("tvStatus", "This stream could not play in the browser. Try the broadcaster website link.");
+  };
+
   if (url.includes(".m3u8") && window.Hls && Hls.isSupported()) {
-    state.hls = new Hls();
+    state.hls = new Hls({
+      enableWorker:true,
+      lowLatencyMode:true
+    });
+
     state.hls.loadSource(url);
-    state.hls.attachMedia(video);
+    state.hls.attachMedia(player);
 
     state.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-      video.play().catch(() => {
-        setStatus("tvStatus", "Press the play button to start the channel.");
+      player.play().then(() => {
+        setStatus("tvStatus", "Playing " + channel.name);
+      }).catch(() => {
+        setStatus("tvStatus", "Press Play in the video player.");
       });
     });
 
     state.hls.on(Hls.Events.ERROR, (event, data) => {
-      if (data.fatal) setStatus("tvStatus", "This channel stream is unavailable.");
+      if (data.fatal) {
+        setStatus("tvStatus", "The channel stream is unavailable or blocked.");
+      }
     });
+
   } else {
-    video.src = url;
-    video.play().catch(() => {
-      setStatus("tvStatus", "Press Play. This channel may not support browser playback.");
+    player.src = url;
+    player.play().then(() => {
+      setStatus("tvStatus", "Playing " + channel.name);
+    }).catch(() => {
+      setStatus("tvStatus", "Press Play. This stream may not support browser playback.");
     });
   }
 }
 
 $("tvSearch").addEventListener("input", renderTV);
-$("tvCountry").addEventListener("change", renderTV);
+$("tvRegion").addEventListener("change", renderTV);
 $("moreTV").addEventListener("click", () => {
   state.tvLimit += 24;
   renderTV();
 });
 $("refreshTV").addEventListener("click", loadTV);
 
-/* ---------------- RADIO ---------------- */
+/* =============== RADIO =============== */
 
 async function loadRadio() {
-  setStatus("radioStatus", "Loading radio stations...");
+  setStatus("radioStatus", "Searching radio stations...");
   $("radioGrid").innerHTML = "";
 
   try {
-    const url = "https://all.api.radio-browser.info/json/stations/search" +
-      "?limit=300&hidebroken=true&order=clickcount&reverse=true";
+    const countryCode = $("radioRegion").value;
+    const endpoint = countryCode === "RW"
+      ? "https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/RW?limit=300&hidebroken=true&order=clickcount&reverse=true"
+      : "https://de1.api.radio-browser.info/json/stations/search?limit=300&hidebroken=true&order=clickcount&reverse=true";
 
-    const stations = await fetchJSON(url);
+    const stations = await getJSON(endpoint);
 
     state.radio = stations
       .filter(station => station.url_resolved || station.url)
       .map(station => ({
-        name: station.name || "Radio Station",
+        name: station.name || "Radio station",
         country: station.country || "International",
         language: station.language || "",
         logo: station.favicon || "",
-        url: station.url_resolved || station.url
+        url: station.url_resolved || station.url,
+        homepage: station.homepage || ""
       }));
 
     state.radioLimit = 24;
     renderRadio();
+
     setStatus("radioStatus", `${state.radio.length} radio stations found.`);
   } catch (error) {
     console.error(error);
-    setStatus("radioStatus", "Radio stations could not load. Check your internet connection.");
-    showEmpty("radioGrid", "Radio list is currently unavailable. Try Refresh.");
+    setStatus("radioStatus", "Radio directory could not be reached. Try Refresh.");
+    showEmpty("radioGrid", "Radio list unavailable.");
   }
 }
 
@@ -323,79 +377,96 @@ function renderRadio() {
 
   const visible = filtered.slice(0, state.radioLimit);
 
-  $("radioGrid").innerHTML = visible.map(station => `
-    <article class="media-card">
-      <div class="media-thumb">
-        ${station.logo
-          ? `<img src="${escapeHTML(station.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`
-          : "📻"}
-      </div>
-      <h3>${escapeHTML(station.name)}</h3>
-      <p>${escapeHTML(station.country)}</p>
-      <button class="card-action" data-radio-url="${escapeHTML(station.url)}" data-radio-name="${escapeHTML(station.name)}">▶ Listen</button>
-    </article>
-  `).join("");
+  $("radioGrid").innerHTML = visible.map(station => {
+    const index = state.radio.indexOf(station);
+    const logo = station.logo
+      ? `<img src="${escapeHTML(station.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      : "📻";
 
-  if (!visible.length) showEmpty("radioGrid", "No radio stations found.");
+    return `
+      <article class="media-card">
+        <div class="media-thumb">${logo}</div>
+        <h3>${escapeHTML(station.name)}</h3>
+        <p>${escapeHTML(station.country)} ${station.language ? "• " + escapeHTML(station.language) : ""}</p>
+        <button class="card-action" data-radio="${index}">▶ Listen here</button>
+      </article>
+    `;
+  }).join("");
+
+  if (!visible.length) showEmpty("radioGrid", "No stations found.");
+
   $("moreRadio").hidden = visible.length >= filtered.length;
 
-  document.querySelectorAll("[data-radio-url]").forEach(button => {
+  document.querySelectorAll("[data-radio]").forEach(button => {
     button.addEventListener("click", () => {
-      playRadio(button.dataset.radioUrl, button.dataset.radioName);
+      playRadio(state.radio[Number(button.dataset.radio)]);
     });
   });
 }
 
-function playRadio(url, name) {
+function playRadio(station) {
+  if (!station) return;
+
   const player = $("radioPlayer");
   player.pause();
-  player.src = url;
+  player.src = station.url;
   player.load();
 
-  $("radioNow").textContent = name;
-  setStatus("radioStatus", "Connecting to radio...");
+  $("radioNow").textContent = station.name;
+  setStatus("radioStatus", "Connecting to " + station.name + "...");
+
+  $("radioExternal").hidden = !station.homepage;
+  if (station.homepage) $("radioExternal").href = station.homepage;
 
   player.play().then(() => {
-    setStatus("radioStatus", "Now playing.");
+    setStatus("radioStatus", "Now playing: " + station.name);
   }).catch(() => {
-    setStatus("radioStatus", "Press Play to listen. This station may not support browser playback.");
+    setStatus("radioStatus", "Press Play. If it still fails, the station may be offline or block browser playback.");
   });
 }
 
 $("radioSearch").addEventListener("input", renderRadio);
+$("radioRegion").addEventListener("change", loadRadio);
 $("moreRadio").addEventListener("click", () => {
   state.radioLimit += 24;
   renderRadio();
 });
 $("refreshRadio").addEventListener("click", loadRadio);
 
-/* ---------------- MOVIES ---------------- */
+/* =============== MOVIES =============== */
 
 async function loadMovies() {
   setStatus("movieStatus", "Searching movie library...");
   $("movieGrid").innerHTML = "";
 
   try {
-    const searchURL =
-      "https://archive.org/advancedsearch.php?q=" +
-      encodeURIComponent('mediatype:movies AND (collection:feature_films OR collection:classic_cinema)') +
-      "&fl[]=identifier&fl[]=title&fl[]=description&rows=60&page=1&output=json";
+    const searchTerm =
+      'mediatype:movies AND collection:classic_cinema';
 
-    const data = await fetchJSON(searchURL);
+    const url =
+      "https://archive.org/advancedsearch.php?q=" +
+      encodeURIComponent(searchTerm) +
+      "&fl[]=identifier&fl[]=title&fl[]=description&rows=80&page=1&output=json";
+
+    const data = await getJSON(url);
 
     state.movies = (data.response?.docs || []).map(movie => ({
-      id: movie.identifier,
-      title: movie.title || movie.identifier,
-      description: movie.description || "Internet Archive movie",
-      image: `https://archive.org/services/img/${encodeURIComponent(movie.identifier)}`
+      id:movie.identifier,
+      title:movie.title || movie.identifier,
+      description:typeof movie.description === "string"
+        ? movie.description
+        : "Film from the Internet Archive collection.",
+      image:"https://archive.org/services/img/" +
+        encodeURIComponent(movie.identifier)
     }));
 
     state.movieLimit = 20;
     renderMovies();
-    setStatus("movieStatus", `${state.movies.length} movie entries found. Choose a film to check playback.`);
+
+    setStatus("movieStatus", `${state.movies.length} film entries found.`);
   } catch (error) {
     console.error(error);
-    setStatus("movieStatus", "Movie library could not load. Try Refresh.");
+    setStatus("movieStatus", "Movie library could not be reached. Try Refresh.");
     showEmpty("movieGrid", "Movies are currently unavailable.");
   }
 }
@@ -409,63 +480,73 @@ function renderMovies() {
 
   const visible = filtered.slice(0, state.movieLimit);
 
-  $("movieGrid").innerHTML = visible.map(movie => `
-    <article class="media-card">
-      <div class="media-thumb">
-        <img src="${escapeHTML(movie.image)}" alt="" loading="lazy" onerror="this.style.display='none'">
-      </div>
-      <h3>${escapeHTML(movie.title)}</h3>
-      <p>${escapeHTML(String(movie.description).replace(/<[^>]*>/g, "").slice(0, 100))}</p>
-      <button class="card-action" data-movie-id="${escapeHTML(movie.id)}">▶ Play movie</button>
-    </article>
-  `).join("");
+  $("movieGrid").innerHTML = visible.map(movie => {
+    const index = state.movies.indexOf(movie);
+
+    return `
+      <article class="media-card">
+        <div class="media-thumb">
+          <img src="${escapeHTML(movie.image)}" alt="" loading="lazy"
+            onerror="this.style.display='none'">
+        </div>
+        <h3>${escapeHTML(movie.title)}</h3>
+        <p>${escapeHTML(movie.description.slice(0,110))}</p>
+        <button class="card-action" data-movie="${index}">▶ Play movie</button>
+      </article>
+    `;
+  }).join("");
 
   if (!visible.length) showEmpty("movieGrid", "No movies found.");
+
   $("moreMovies").hidden = visible.length >= filtered.length;
 
-  document.querySelectorAll("[data-movie-id]").forEach(button => {
+  document.querySelectorAll("[data-movie]").forEach(button => {
     button.addEventListener("click", () => {
-      playMovie(button.dataset.movieId);
+      playMovie(state.movies[Number(button.dataset.movie)]);
     });
   });
 }
 
-async function playMovie(identifier) {
+async function playMovie(movie) {
+  if (!movie) return;
+
   const player = $("moviePlayer");
-  $("movieNow").textContent = "Loading movie...";
-  setStatus("movieStatus", "Finding a playable video file...");
+  $("movieNow").textContent = movie.title;
+  setStatus("movieStatus", "Checking available video files...");
+
+  player.pause();
+  player.removeAttribute("src");
+  player.load();
 
   try {
-    const metadata = await fetchJSON(
-      `https://archive.org/metadata/${encodeURIComponent(identifier)}`
+    const metadata = await getJSON(
+      "https://archive.org/metadata/" + encodeURIComponent(movie.id)
     );
 
     const files = metadata.files || [];
 
     const playable = files.find(file =>
       /\.(mp4|m4v|webm)$/i.test(file.name || "") &&
-      Number(file.size || 0) > 1000000
+      Number(file.size || 0) > 500000
     );
 
     if (!playable) {
-      setStatus("movieStatus", "No compatible video file was found for this movie.");
+      setStatus("movieStatus", "No browser-compatible video file was found. Try another movie.");
       return;
     }
 
-    const videoURL = "https://archive.org/download/" +
-      encodeURIComponent(identifier) + "/" +
-      playable.name.split("/").map(encodeURIComponent).join("/");
+    const filePath = playable.name.split("/")
+      .map(part => encodeURIComponent(part)).join("/");
 
-    player.src = videoURL;
+    player.src = "https://archive.org/download/" +
+      encodeURIComponent(movie.id) + "/" + filePath;
+
     player.load();
-
-    const movie = state.movies.find(item => item.id === identifier);
-    $("movieNow").textContent = movie ? movie.title : identifier;
 
     player.play().then(() => {
       setStatus("movieStatus", "Movie is playing.");
     }).catch(() => {
-      setStatus("movieStatus", "Press Play to start the movie.");
+      setStatus("movieStatus", "Press Play in the video player.");
     });
 
   } catch (error) {
@@ -481,9 +562,9 @@ $("moreMovies").addEventListener("click", () => {
 });
 $("refreshMovies").addEventListener("click", loadMovies);
 
-/* ---------------- START WEBSITE ---------------- */
+/* =============== START =============== */
 
-function startWebsite() {
+function startITTNews() {
   showPage("home");
 
   loadNews();
@@ -492,4 +573,4 @@ function startWebsite() {
   loadMovies();
 }
 
-document.addEventListener("DOMContentLoaded", startWebsite);
+startITTNews();
