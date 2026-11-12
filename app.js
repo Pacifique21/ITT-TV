@@ -1,922 +1,698 @@
-"use strict";
 
-/* =====================================================
-   ITT NEWS - COMPLETE APP
-   Sections: HOME / NEWS / LIVE TV / LIVE RADIO / MOVIES
-===================================================== */
+"use strict";
 
 const $ = id => document.getElementById(id);
 
-const state = {
-  news: [],
-  newsPage: 1,
-  newsFiltered: [],
-  radio: [],
-  radioOffset: 0,
-  radioCountry: "Rwanda",
-  tv: [],
-  movies: [],
-  movieOffset: 0,
-  movieQuery: "",
-  movieRegion: "all",
-  tvHls: null,
-  movieHls: null
+const toast = message => {
+  const el = $("toast");
+  if (!el) return;
+  el.textContent = message;
+  el.classList.add("show");
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.classList.remove("show"), 2800);
 };
 
-const CONFIG = {
-  radioApi: "https://de1.api.radio-browser.info",
-  rssProxy: "https://api.rss2json.com/v1/api.json?rss_url=",
-  newsFeeds: [
-    {
-      name: "RBA Rwanda",
-      region: "rwanda",
-      url: "https://www.rba.co.rw/rss.php"
-    },
-    {
-      name: "The New Times",
-      region: "rwanda",
-      url: "https://www.newtimes.co.rw/rss"
-    },
-    {
-      name: "BBC World",
-      region: "world",
-      url: "https://feeds.bbci.co.uk/news/world/rss.xml"
-    },
-    {
-      name: "Al Jazeera",
-      region: "world",
-      url: "https://www.aljazeera.com/xml/rss/all.xml"
-    },
-    {
-      name: "DW English",
-      region: "world",
-      url: "https://rss.dw.com/rdf/rss-en-all"
-    }
-  ]
-};
+const escapeHTML = value =>
+  String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
 
-const TV_CHANNELS = [
-  {
-    name: "Rwanda TV / RTV",
-    country: "Rwanda",
-    kind: "page",
-    url: "https://www.rba.co.rw/tv",
-    description: "Rwanda Broadcasting Agency official television page."
-  },
-  {
-    name: "ZACU TV",
-    country: "Rwanda",
-    kind: "page",
-    url: "https://www.canalplus.com/rw/chaines/zacu-tv",
-    description: "ZACU TV official provider page. Subscription may be required."
-  },
-  {
-    name: "RADIOTV10",
-    country: "Rwanda",
-    kind: "page",
-    url: "https://radiotv10.rw/",
-    description: "RADIOTV10 official website."
-  },
-  {
-    name: "Al Jazeera English Live",
-    country: "International",
-    kind: "page",
-    url: "https://www.aljazeera.com/video/live",
-    description: "Al Jazeera official live broadcast."
-  },
-  {
-    name: "France 24",
-    country: "International",
-    kind: "page",
-    url: "https://www.france24.com/en/live",
-    description: "France 24 official live news page."
-  },
-  {
-    name: "DW News",
-    country: "International",
-    kind: "page",
-    url: "https://www.dw.com/en/live-tv/s-100825",
-    description: "Deutsche Welle official live TV page."
-  },
-  {
-    name: "NASA TV",
-    country: "International",
-    kind: "page",
-    url: "https://www.nasa.gov/nasatv/",
-    description: "NASA official live video page."
-  }
-];
-
-const MOVIE_SOURCES = [
-  {
-    name: "Amashusho – Rwanda Films & Series",
-    region: "rwanda",
-    description: "Rwandan creator video platform. Availability and access depend on each creator.",
-    url: "https://amashusho.com/"
-  },
-  {
-    name: "ZACU Entertainment",
-    region: "rwanda",
-    description: "Rwandan entertainment provider official website.",
-    url: "https://www.zacuentertainment.com/"
-  },
-  {
-    name: "RBA Videos",
-    region: "rwanda",
-    description: "Official Rwanda Broadcasting Agency programmes and videos.",
-    url: "https://www.rba.co.rw/tv"
-  },
-  {
-    name: "Library of Congress – National Screening Room",
-    region: "archive",
-    description: "Historic films. Check the rights and viewing conditions for each film.",
-    url: "https://www.loc.gov/collections/national-screening-room/"
-  },
-  {
-    name: "Internet Archive – Feature Films",
-    region: "archive",
-    description: "Film archive. Check the rights information on each title before reuse.",
-    url: "https://archive.org/details/feature_films"
-  }
-];
-
-
-/* -------------------------
-   SMALL UTILITIES
-------------------------- */
-
-function text(value) {
-  return String(value ?? "").replace(/[&<>"']/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
-}
-
-function validUrl(value) {
+const safeUrl = value => {
   try {
-    const u = new URL(value);
-    return u.protocol === "https:" || u.protocol === "http:";
+    const url = new URL(value);
+    return ["https:","http:"].includes(url.protocol) ? url.href : "#";
   } catch {
-    return false;
+    return "#";
   }
-}
+};
 
-function setStatus(id, message) {
-  const el = $(id);
-  if (el) el.textContent = message;
-}
-
-function dateText(value) {
-  if (!value) return "Date unknown";
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? String(value) :
-    d.toLocaleString();
-}
-
-async function fetchJson(url, timeoutMs = 16000) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const response = await fetch(url, {
-      signal: controller.signal,
-      headers: { "Accept": "application/json" }
-    });
-    if (!response.ok) throw new Error("HTTP " + response.status);
-    return await response.json();
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-
-/* -------------------------
-   NAVIGATION
-------------------------- */
-
-const validPages = ["home", "news", "tv", "radio", "movies"];
-
-function openPage(page) {
-  if (!validPages.includes(page)) return;
-
-  document.querySelectorAll(".page").forEach(section => {
-    section.classList.toggle("active", section.id === page);
-  });
-
-  document.querySelectorAll(".nav-btn").forEach(button => {
-    button.classList.toggle("active", button.dataset.page === page);
-  });
-
-  $("mainNav").classList.remove("open");
-  window.scrollTo({ top: 0, behavior: "smooth" });
-
-  if (page === "news" && !state.news.length) loadNews();
-  if (page === "tv") renderTV();
-  if (page === "radio" && !state.radio.length) searchRadio(true);
-  if (page === "movies" && !state.movies.length) renderMovies();
-}
-
-document.querySelectorAll("[data-page]").forEach(button => {
-  button.addEventListener("click", event => {
-    event.preventDefault();
-    openPage(button.dataset.page);
-  });
-});
-
-document.querySelectorAll("[data-go]").forEach(button => {
-  button.addEventListener("click", () => openPage(button.dataset.go));
-});
-
-$("menuBtn").addEventListener("click", () => {
-  $("mainNav").classList.toggle("open");
-});
+$("todayDate").textContent =
+  new Intl.DateTimeFormat("en", {dateStyle:"medium"}).format(new Date());
 
 $("year").textContent = new Date().getFullYear();
 
+/* NAVIGATION */
+function showPage(page) {
+  document.querySelectorAll(".page-section").forEach(section => {
+    section.classList.toggle("active-page", section.id === page);
+  });
 
-/* =====================================================
-   NEWS
-   RSS is fetched through RSS2JSON.
-   The website displays feed summaries and source links.
-===================================================== */
+  document.querySelectorAll(".nav-link").forEach(link => {
+    link.classList.toggle("active", link.dataset.page === page);
+  });
 
-async function loadOneFeed(feed) {
-  const url = CONFIG.rssProxy + encodeURIComponent(feed.url);
-  const data = await fetchJson(url);
+  $("mainNav").classList.remove("open");
+  window.scrollTo({top:0,behavior:"smooth"});
 
-  if (data.status !== "ok" || !Array.isArray(data.items)) {
-    throw new Error("Feed not available: " + feed.name);
+  if (location.hash !== "#" + page) {
+    history.replaceState(null,"","#" + page);
+  }
+}
+
+document.querySelectorAll('a[href^="#"]').forEach(link => {
+  link.addEventListener("click", event => {
+    const id = link.getAttribute("href").slice(1);
+    const target = $(id);
+
+    if (target && target.classList.contains("page-section")) {
+      event.preventDefault();
+      showPage(id);
+    }
+  });
+});
+
+$("menuToggle").addEventListener("click", () => {
+  $("mainNav").classList.toggle("open");
+});
+
+const firstPage = location.hash.slice(1);
+if ($(firstPage)?.classList.contains("page-section")) {
+  showPage(firstPage);
+}
+
+/* NEWS */
+const RSS_API =
+  "https://api.rss2json.com/v1/api.json?rss_url=";
+
+const newsFeeds = {
+  rwanda: [
+    "https://www.newtimes.co.rw/rss.xml"
+  ],
+  world: [
+    "https://feeds.bbci.co.uk/news/world/rss.xml",
+    "https://www.aljazeera.com/xml/rss/all.xml"
+  ],
+  sports: [
+    "https://feeds.bbci.co.uk/sport/rss.xml",
+    "https://www.espn.com/espn/rss/news"
+  ]
+};
+
+let allNews = [];
+let allSports = [];
+
+async function readFeed(url, source) {
+  const response = await fetch(
+    RSS_API + encodeURIComponent(url)
+  );
+
+  if (!response.ok) {
+    throw new Error("Feed unavailable");
   }
 
-  return data.items.map(item => ({
-    title: item.title || "News",
-    description: item.description || item.content || "",
-    link: item.link || feed.url,
-    image: item.thumbnail || item.enclosure?.link || "",
+  const data = await response.json();
+
+  if (data.status !== "ok") {
+    throw new Error("Feed unavailable");
+  }
+
+  return (data.items || []).map(item => ({
+    title: item.title || "Untitled story",
+    description: (item.description || item.content || "")
+      .replace(/<[^>]*>/g," ")
+      .replace(/\s+/g," ")
+      .slice(0,190),
+    link: safeUrl(item.link),
+    image: safeUrl(
+      item.thumbnail || item.enclosure?.link || ""
+    ),
     date: item.pubDate || "",
-    source: feed.name,
-    region: feed.region
-  }));
+    source,
+    category: source.toLowerCase()
+  })).filter(item => item.link !== "#");
+}
+
+function newsCard(item) {
+  const image =
+    item.image && item.image !== "#"
+      ? `<img src="${escapeHTML(item.image)}" alt="" loading="lazy" onerror="this.remove()">`
+      : "▤";
+
+  return `
+    <article class="news-card">
+      <div class="news-image">${image}</div>
+      <div class="news-content">
+        <span class="news-meta">
+          ${escapeHTML(item.source)}
+          ${item.date ? " • " + escapeHTML(new Date(item.date).toLocaleDateString()) : ""}
+        </span>
+        <h3>${escapeHTML(item.title)}</h3>
+        <p>${escapeHTML(item.description)}</p>
+        <a href="${escapeHTML(item.link)}" target="_blank" rel="noopener">
+          Read at publisher ↗
+        </a>
+      </div>
+    </article>
+  `;
 }
 
 async function loadNews() {
-  setStatus("newsStatus", "Turimo kuzana amakuru mashya...");
+  $("newsStatus").textContent = "Fetching headlines...";
 
-  const results = await Promise.allSettled(
-    CONFIG.newsFeeds.map(loadOneFeed)
-  );
+  $("homeNews").innerHTML =
+    '<div class="loading-card">Loading headlines...</div>';
 
-  state.news = results
+  const tasks = [
+    ...newsFeeds.rwanda.map(url => readFeed(url,"Rwanda")),
+    ...newsFeeds.world.map(url => readFeed(url,"World"))
+  ];
+
+  const results = await Promise.allSettled(tasks);
+
+  allNews = results
     .filter(result => result.status === "fulfilled")
-    .flatMap(result => result.value)
-    .filter(item => validUrl(item.link));
+    .flatMap(result => result.value);
 
-  const unique = new Map();
-  state.news.forEach(item => {
-    const key = item.link;
-    if (!unique.has(key)) unique.set(key, item);
-  });
-
-  state.news = [...unique.values()].sort((a, b) =>
-    new Date(b.date || 0) - new Date(a.date || 0)
-  );
-
-  if (!state.news.length) {
-    setStatus(
-      "newsStatus",
-      "Amakuru ntiyabonetse ubu. RSS provider ishobora kuba iri guhura n'ikibazo. Gerageza Refresh nyuma."
-    );
-  } else {
-    setStatus(
-      "newsStatus",
-      `${state.news.length} news items loaded. Feed summaries are displayed inside ITT NEWS.`
-    );
-  }
-
-  state.newsPage = 1;
-  applyNewsFilter();
-}
-
-function applyNewsFilter() {
-  const search = $("newsSearch").value.trim().toLowerCase();
-  const region = $("newsRegion").value;
-
-  state.newsFiltered = state.news.filter(item => {
-    const matchesRegion = region === "all" || item.region === region;
-    const matchesText =
-      !search ||
-      item.title.toLowerCase().includes(search) ||
-      item.description.toLowerCase().includes(search) ||
-      item.source.toLowerCase().includes(search);
-
-    return matchesRegion && matchesText;
-  });
+  allNews = [
+    ...new Map(allNews.map(item => [item.link,item])).values()
+  ].sort((a,b) => new Date(b.date) - new Date(a.date));
 
   renderNews();
+
+  $("newsStatus").textContent = allNews.length
+    ? `${allNews.length} headlines loaded.`
+    : "News feeds are unavailable. Check your connection and try again.";
 }
 
 function renderNews() {
-  const amount = state.newsPage * 12;
-  const items = state.newsFiltered.slice(0, amount);
+  const query = ($("newsSearch").value || "").toLowerCase();
+  const region = $("newsRegion").value;
 
-  if (!items.length) {
-    $("newsList").innerHTML =
-      '<p class="status">Nta nkuru ihuye n\'ibyo washakishije.</p>';
-    $("moreNews").hidden = true;
-    return;
+  const list = allNews.filter(item => {
+    const matchesRegion =
+      region === "all" || item.category === region;
+
+    const matchesQuery =
+      (item.title + " " + item.description)
+        .toLowerCase().includes(query);
+
+    return matchesRegion && matchesQuery;
+  });
+
+  $("newsGrid").innerHTML = list.length
+    ? list.map(newsCard).join("")
+    : '<div class="empty-card">No matching news found.</div>';
+
+  $("homeNews").innerHTML = allNews.length
+    ? allNews.slice(0,3).map(newsCard).join("")
+    : '<div class="empty-card">Headlines will appear when feeds are available.</div>';
+}
+
+$("newsSearch").addEventListener("input",renderNews);
+$("newsRegion").addEventListener("change",renderNews);
+$("refreshNews").addEventListener("click",loadNews);
+
+/* SPORTS */
+async function loadSports() {
+  $("sportsStatus").textContent = "Fetching sports headlines...";
+
+  const results = await Promise.allSettled(
+    newsFeeds.sports.map(url => readFeed(url,"Sports"))
+  );
+
+  allSports = results
+    .filter(result => result.status === "fulfilled")
+    .flatMap(result => result.value);
+
+  allSports = [
+    ...new Map(allSports.map(item => [item.link,item])).values()
+  ];
+
+  renderSports();
+
+  $("sportsStatus").textContent = allSports.length
+    ? `${allSports.length} sports stories loaded.`
+    : "Sports feeds are unavailable right now.";
+}
+
+function renderSports() {
+  const query = ($("sportsSearch").value || "").toLowerCase();
+
+  const list = allSports.filter(item =>
+    (item.title + " " + item.description)
+      .toLowerCase().includes(query)
+  );
+
+  $("sportsGrid").innerHTML = list.length
+    ? list.map(newsCard).join("")
+    : '<div class="empty-card">No sports stories available.</div>';
+}
+
+$("sportsSearch").addEventListener("input",renderSports);
+$("refreshSports").addEventListener("click",loadSports);
+
+/* TV CHANNELS */
+const rwandaChannels = [
+  {
+    name:"Rwanda TV / RTV",
+    type:"RBA official live page",
+    url:"https://www.rba.co.rw/tv",
+    note:"RBA official television page"
+  },
+  {
+    name:"KC2",
+    type:"RBA channel",
+    url:"https://www.rba.co.rw/",
+    note:"Check RBA official channel directory"
+  },
+  {
+    name:"Magic Sports TV",
+    type:"RBA channel",
+    url:"https://www.rba.co.rw/",
+    note:"RBA broadcaster directory"
+  },
+  {
+    name:"TV10 Rwanda",
+    type:"Official website",
+    url:"https://radiotv10.rw/",
+    note:"TV10 official website"
+  },
+  {
+    name:"TV1 Rwanda",
+    type:"Official website",
+    url:"https://tv1.rw/",
+    note:"TV1 official website"
+  },
+  {
+    name:"Isibo TV",
+    type:"Official website",
+    url:"https://isibo.tv/",
+    note:"Isibo TV official website"
+  },
+  {
+    name:"BTN TV",
+    type:"Official website",
+    url:"https://btn.tv/",
+    note:"BTN TV official website"
+  },
+  {
+    name:"ZACU TV",
+    type:"Official channel page",
+    url:"https://www.canalplus.com/rw/chaines/zacu-tv",
+    note:"May require a subscription or provider"
   }
+];
 
-  $("newsList").innerHTML = items.map((item, index) => `
-    <article class="item-card">
-      <div class="meta">${text(item.source)} • ${text(item.region.toUpperCase())}</div>
-      <h3>${text(item.title)}</h3>
-      <p>${text(stripHtml(item.description)).slice(0, 230)}...</p>
-      <p class="muted">${text(dateText(item.date))}</p>
-      <div class="card-actions">
-        <button class="btn red" data-read-news="${index}">SOMA HANO</button>
+const internationalChannels = [
+  {
+    name:"Al Jazeera English",
+    type:"Official live page",
+    url:"https://www.aljazeera.com/video/live/"
+  },
+  {
+    name:"France 24 English",
+    type:"Official live page",
+    url:"https://www.france24.com/en/live"
+  },
+  {
+    name:"DW News",
+    type:"Official live page",
+    url:"https://www.dw.com/en/live-tv/s-100825"
+  },
+  {
+    name:"BBC News",
+    type:"Official website",
+    url:"https://www.bbc.com/news"
+  },
+  {
+    name:"Africanews",
+    type:"Official website",
+    url:"https://www.africanews.com/"
+  }
+];
+
+function openTV(channel) {
+  $("tvNowPlaying").textContent = channel.name;
+  $("tvMessage").textContent =
+    channel.note || "Opening official broadcaster page.";
+
+  $("tvExternal").href = channel.url;
+  $("tvExternal").hidden = false;
+
+  $("tvVideo").pause();
+  $("tvVideo").removeAttribute("src");
+  $("tvVideo").load();
+  $("tvVideo").classList.remove("show");
+
+  $("tvFrame").classList.remove("show");
+  $("tvFrame").src = "about:blank";
+
+  $("tvPlaceholder").style.display = "flex";
+
+  $("tvMessage").textContent =
+    "This channel has no verified public embeddable stream configured. Use the official channel link.";
+
+  window.open(channel.url,"_blank","noopener");
+  toast("Opening the official TV channel page.");
+}
+
+function channelButton(channel) {
+  return `
+    <div class="channel-row">
+      <div>
+        <strong>${escapeHTML(channel.name)}</strong>
+        <small>${escapeHTML(channel.type)}</small>
       </div>
+      <button type="button" data-tv="${escapeHTML(channel.name)}">
+        Open
+      </button>
+    </div>
+  `;
+}
+
+$("rwandaTvList").innerHTML =
+  rwandaChannels.map(channelButton).join("");
+
+function renderInternationalTV() {
+  const query = ($("tvSearch").value || "").toLowerCase();
+
+  const list = internationalChannels.filter(channel =>
+    channel.name.toLowerCase().includes(query)
+  );
+
+  $("internationalTvList").innerHTML = list.map(channel => `
+    <article class="channel-card">
+      <div class="channel-symbol">▣</div>
+      <h3>${escapeHTML(channel.name)}</h3>
+      <p>${escapeHTML(channel.type)}</p>
+      <button class="play-small" data-tv="${escapeHTML(channel.name)}">
+        Open official page ↗
+      </button>
     </article>
   `).join("");
-
-  document.querySelectorAll("[data-read-news]").forEach(button => {
-    button.addEventListener("click", () => {
-      const item = items[Number(button.dataset.readNews)];
-      openNewsReader(item);
-    });
-  });
-
-  $("moreNews").hidden = amount >= state.newsFiltered.length;
 }
 
-function stripHtml(html) {
-  const div = document.createElement("div");
-  div.innerHTML = String(html || "");
-  return div.textContent || div.innerText || "";
+function findTV(name) {
+  return [...rwandaChannels,...internationalChannels]
+    .find(channel => channel.name === name);
 }
 
-function openNewsReader(item) {
-  $("newsReader").hidden = false;
-  $("readerTitle").textContent = item.title;
-  $("readerMeta").textContent =
-    `${item.source} • ${dateText(item.date)}`;
-  $("readerBody").textContent =
-    stripHtml(item.description) ||
-    "Iyi feed ntiyatanze umwirondoro w'inkuru. Fungura official source kugira ngo usome inkuru yuzuye.";
-  $("readerSource").href = item.link;
-  $("newsReader").scrollIntoView({ behavior: "smooth", block: "start" });
-}
+document.addEventListener("click",event => {
+  const button = event.target.closest("[data-tv]");
+  if (!button) return;
 
-$("closeReader").addEventListener("click", () => {
-  $("newsReader").hidden = true;
+  const channel = findTV(button.dataset.tv);
+  if (channel) openTV(channel);
 });
 
-$("refreshNews").addEventListener("click", loadNews);
-$("newsSearch").addEventListener("input", applyNewsFilter);
-$("newsRegion").addEventListener("change", applyNewsFilter);
+$("tvSearch").addEventListener("input",renderInternationalTV);
+renderInternationalTV();
 
-$("moreNews").addEventListener("click", () => {
-  state.newsPage += 1;
-  renderNews();
-});
+/* RADIO */
+let radioStations = [];
+const radioPlayer = $("radioPlayer");
 
-
-/* =====================================================
-   PLAYER ENGINE: VIDEO / HLS / YOUTUBE
-===================================================== */
-
-function youtubeEmbed(url) {
-  try {
-    const parsed = new URL(url);
-    let id = "";
-
-    if (parsed.hostname === "youtu.be") {
-      id = parsed.pathname.slice(1);
-    } else if (parsed.hostname.includes("youtube.com")) {
-      if (parsed.pathname === "/watch") id = parsed.searchParams.get("v") || "";
-      if (parsed.pathname.startsWith("/live/")) id = parsed.pathname.split("/")[2];
-      if (parsed.pathname.startsWith("/embed/")) id = parsed.pathname.split("/")[2];
-    }
-
-    return id ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}` : "";
-  } catch {
-    return "";
-  }
-}
-
-function stopVideo(videoId, frameId, hlsKey) {
-  const video = $(videoId);
-  const frame = $(frameId);
-
-  if (state[hlsKey]) {
-    state[hlsKey].destroy();
-    state[hlsKey] = null;
-  }
-
-  video.pause();
-  video.removeAttribute("src");
-  video.load();
-  video.style.display = "none";
-
-  frame.src = "about:blank";
-  frame.style.display = "none";
-}
-
-function playMedia(url, options) {
-  const {
-    videoId, frameId, hlsKey, statusId
-  } = options;
-
-  const video = $(videoId);
-  const frame = $(frameId);
-
-  if (!validUrl(url)) {
-    setStatus(statusId, "URL ntabwo yemewe.");
-    return;
-  }
-
-  stopVideo(videoId, frameId, hlsKey);
-
-  const yt = youtubeEmbed(url);
-
-  if (yt) {
-    frame.src = yt;
-    frame.style.display = "block";
-    setStatus(statusId, "YouTube player yafunguwe. Nyirayo ashobora kuba yarabujije embedding.");
-    return;
-  }
-
-  if (/\.m3u8($|\?)/i.test(url)) {
-    if (video.canPlayType("application/vnd.apple.mpegurl")) {
-      video.src = url;
-      video.style.display = "block";
-      video.play().catch(() => {
-        setStatus(statusId, "Kanda Play kuri video player.");
-      });
-      return;
-    }
-
-    if (window.Hls && Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: true
-      });
-
-      state[hlsKey] = hls;
-      hls.loadSource(url);
-      hls.attachMedia(video);
-      video.style.display = "block";
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => {
-          setStatus(statusId, "Stream yabonetse. Kanda Play.");
-        });
-      });
-
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-          setStatus(statusId, "Stream ntiyashoboye gukina. Ishobora kuba itari gukora cyangwa ibuza access.");
-          hls.destroy();
-          state[hlsKey] = null;
-        }
-      });
-      return;
-    }
-
-    setStatus(statusId, "Browser yawe ntishyigikira HLS stream.");
-    return;
-  }
-
-  if (/\.(mp4|webm|ogg|mp3|aac)($|\?)/i.test(url)) {
-    video.src = url;
-    video.style.display = "block";
-    video.play().catch(() => {
-      setStatus(statusId, "Kanda Play. Niba itakinnye, stream ishobora kuba itaboneka.");
-    });
-    return;
-  }
-
-  // Other links may be embeddable, but provider policy can block iframe.
-  frame.src = url;
-  frame.style.display = "block";
-  setStatus(statusId, "Turagerageza gufungura player. Provider ashobora kubuza iframe.");
-}
-
-
-/* =====================================================
-   LIVE TV
-===================================================== */
-
-state.tv = [...TV_CHANNELS];
-
-function renderTV() {
-  const query = $("tvSearch").value.trim().toLowerCase();
-  const region = $("tvRegion").value;
-
-  const list = state.tv.filter(channel => {
-    const regionOK = region === "all" || channel.country === region;
-    const queryOK = !query ||
-      channel.name.toLowerCase().includes(query) ||
-      channel.country.toLowerCase().includes(query);
-
-    return regionOK && queryOK;
-  });
-
-  $("tvList").innerHTML = list.map(channel => {
-    const index = state.tv.indexOf(channel);
-    return `
-      <article class="item-card">
-        <div class="meta">${text(channel.country)} • OFFICIAL SOURCE</div>
-        <h3>${text(channel.name)}</h3>
-        <p>${text(channel.description)}</p>
-        <div class="card-actions">
-          <button class="btn blue" data-tv-play="${index}">PLAY / OPEN</button>
-        </div>
-      </article>`;
-  }).join("") || '<p class="status">Nta TV ibonetse.</p>';
-
-  document.querySelectorAll("[data-tv-play]").forEach(button => {
-    button.addEventListener("click", () => {
-      selectTV(state.tv[Number(button.dataset.tvPlay)]);
-    });
-  });
-}
-
-function selectTV(channel) {
-  stopVideo("tvPlayer", "tvFrame", "tvHls");
-  $("tvNow").textContent = channel.name;
-  $("tvOfficialLink").href = channel.url;
-  $("tvOfficialLink").hidden = false;
-
-  if (channel.stream) {
-    playMedia(channel.stream, {
-      videoId: "tvPlayer",
-      frameId: "tvFrame",
-      hlsKey: "tvHls",
-      statusId: "tvStatus"
-    });
-    return;
-  }
-
-  // Official page is attempted inside the player first.
-  // If the provider blocks embedding, use the official link button.
-  $("tvFrame").src = channel.url;
-  $("tvFrame").style.display = "block";
-  setStatus("tvStatus", "Turagerageza gufungura official live page muri player. Niba itagaragaye, kanda OFFICIAL WEBSITE.");
-}
-
-$("tvSearch").addEventListener("input", renderTV);
-$("tvRegion").addEventListener("change", renderTV);
-
-$("stopTV").addEventListener("click", () => {
-  stopVideo("tvPlayer", "tvFrame", "tvHls");
-  setStatus("tvStatus", "STOPPED");
-});
-
-$("addTV").addEventListener("click", () => {
-  const name = $("tvCustomName").value.trim() || "My TV Stream";
-  const url = $("tvCustomUrl").value.trim();
-
-  if (!validUrl(url)) {
-    setStatus("tvStatus", "Shyiramo URL itangira na https:// cyangwa http://");
-    return;
-  }
-
-  const channel = {
-    name,
-    country: "Custom",
-    kind: "stream",
-    stream: url,
-    url,
-    description: "User added stream"
-  };
-
-  state.tv.unshift(channel);
-  renderTV();
-  selectTV(channel);
-  $("tvCustomName").value = "";
-  $("tvCustomUrl").value = "";
-});
-
-
-/* =====================================================
-   LIVE RADIO - RADIO BROWSER
-===================================================== */
-
-async function searchRadio(reset = true) {
-  const country = $("radioCountry").value;
-  const query = $("radioSearch").value.trim();
-
-  if (reset) {
-    state.radio = [];
-    state.radioOffset = 0;
-  }
-
-  setStatus("radioStatusList", "Turimo gushakisha radio...");
-
-  const params = new URLSearchParams({
-    limit: "36",
-    offset: String(state.radioOffset),
-    hidebroken: "true",
-    order: "votes",
-    reverse: "true"
-  });
-
-  if (country) params.set("country", country);
-  if (query) params.set("name", query);
-
-  const url = `${CONFIG.radioApi}/json/stations/search?${params.toString()}`;
+async function loadRadio() {
+  $("radioStatus").textContent = "Finding Rwanda radio stations...";
 
   try {
-    const stations = await fetchJson(url);
-
-    const usable = stations.filter(station =>
-      station.url_resolved || station.url
+    const response = await fetch(
+      "https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/RW?hidebroken=true&order=clickcount&reverse=true&limit=100"
     );
 
-    state.radio = reset ? usable : state.radio.concat(usable);
-    state.radioOffset += usable.length;
+    if (!response.ok) {
+      throw new Error("Radio directory unavailable");
+    }
+
+    const stations = await response.json();
+
+    radioStations = stations
+      .filter(station => station.url_resolved && station.name)
+      .map(station => ({
+        name:station.name,
+        city:station.state || station.language || "Rwanda",
+        url:station.url_resolved,
+        codec:station.codec || ""
+      }));
 
     renderRadio();
 
-    setStatus(
-      "radioStatusList",
-      `${state.radio.length} radio stations found. Hitamo imwe uyumve.`
-    );
-  } catch (error) {
-    setStatus(
-      "radioStatusList",
-      "Radio directory ntisubije ubu. Reba internet wongere ugerageze."
-    );
-    $("radioList").innerHTML = "";
+    $("radioStatus").textContent = radioStations.length
+      ? `${radioStations.length} stations found. Select Play.`
+      : "No stations are available right now.";
+
+  } catch(error) {
+    $("radioStatus").textContent =
+      "Could not load radio stations. Check your internet connection.";
+
+    $("radioGrid").innerHTML =
+      '<div class="empty-card">Radio directory is unavailable.</div>';
   }
+}
+
+function playRadio(station) {
+  radioPlayer.pause();
+  radioPlayer.src = station.url;
+  radioPlayer.load();
+
+  radioPlayer.play().then(() => {
+    $("radioNowPlaying").textContent = station.name;
+    $("radioDescription").textContent = station.city;
+    $("radioStatus").textContent = "Playing: " + station.name;
+  }).catch(() => {
+    $("radioNowPlaying").textContent = station.name;
+    $("radioStatus").textContent =
+      "This station may be offline or block browser playback.";
+
+    toast("Station could not play. Try another station.");
+  });
 }
 
 function renderRadio() {
-  if (!state.radio.length) {
-    $("radioList").innerHTML =
-      '<p class="status">Nta radio ibonetse. Gerageza guhindura igihugu cyangwa izina.</p>';
-    $("moreRadio").hidden = true;
-    return;
-  }
+  const query = ($("radioSearch").value || "").toLowerCase();
 
-  $("radioList").innerHTML = state.radio.map((station, index) => `
-    <article class="item-card">
-      <div class="meta">${text(station.country || "International")}</div>
-      <h3>${text(station.name || "Radio Station")}</h3>
-      <p>${text(station.tags || station.language || "Live broadcast")}</p>
-      <p>${text(station.codec || "Audio")} ${station.bitrate ? " • " + text(station.bitrate) + " kbps" : ""}</p>
-      <div class="card-actions">
-        <button class="btn green" data-radio-play="${index}">▶ UMVA LIVE</button>
-      </div>
-    </article>
-  `).join("");
+  const list = radioStations.filter(station =>
+    (station.name + " " + station.city)
+      .toLowerCase().includes(query)
+  );
 
-  document.querySelectorAll("[data-radio-play]").forEach(button => {
-    button.addEventListener("click", () => {
-      playRadio(state.radio[Number(button.dataset.radioPlay)]);
-    });
-  });
-
-  $("moreRadio").hidden = state.radio.length < 36;
+  $("radioGrid").innerHTML = list.length
+    ? list.map((station,index) => `
+      <article class="radio-card">
+        <div class="radio-logo">♫</div>
+        <div>
+          <h3>${escapeHTML(station.name)}</h3>
+          <p>${escapeHTML(station.city)}</p>
+        </div>
+        <button class="play-small" data-radio="${index}">
+          Play
+        </button>
+      </article>
+    `).join("")
+    : '<div class="empty-card">No matching radio stations.</div>';
 }
 
-async function playRadio(station) {
-  if (!station) return;
+$("radioGrid").addEventListener("click",event => {
+  const button = event.target.closest("[data-radio]");
+  if (!button) return;
 
-  const stream = station.url_resolved || station.url;
-  if (!validUrl(stream)) {
-    setStatus("radioStatus", "Stream URL ntabwo yemewe.");
-    return;
-  }
+  const query = ($("radioSearch").value || "").toLowerCase();
 
-  const player = $("radioPlayer");
-  player.pause();
-  player.src = stream;
-  player.load();
+  const visible = radioStations.filter(station =>
+    (station.name + " " + station.city)
+      .toLowerCase().includes(query)
+  );
 
-  $("radioNow").textContent = station.name || "Live Radio";
-  $("radioDetails").textContent =
-    `${station.country || ""} • ${station.language || ""} • ${station.codec || ""}`;
-  setStatus("radioStatus", "CONNECTING...");
-
-  // Count a station click as requested by Radio Browser API.
-  if (station.stationuuid) {
-    fetch(`${CONFIG.radioApi}/json/url/${encodeURIComponent(station.stationuuid)}`)
-      .catch(() => {});
-  }
-
-  try {
-    await player.play();
-    setStatus("radioStatus", "PLAYING LIVE");
-  } catch {
-    setStatus(
-      "radioStatus",
-      "Stream yatoranyijwe. Kanda Play kuri audio player. Niba itakinnye, station ishobora kuba offline cyangwa itemerera browser."
-    );
-  }
-}
-
-$("searchRadio").addEventListener("click", () => searchRadio(true));
-$("radioCountry").addEventListener("change", () => searchRadio(true));
-
-$("radioSearch").addEventListener("keydown", event => {
-  if (event.key === "Enter") searchRadio(true);
+  const station = visible[Number(button.dataset.radio)];
+  if (station) playRadio(station);
 });
 
-$("moreRadio").addEventListener("click", () => searchRadio(false));
+$("radioSearch").addEventListener("input",renderRadio);
+$("refreshRadio").addEventListener("click",loadRadio);
 
-document.querySelectorAll(".radio-preset").forEach(button => {
-  button.addEventListener("click", () => {
-    $("radioCountry").value = button.dataset.country;
-    searchRadio(true);
-  });
-});
-
-$("stopRadio").addEventListener("click", () => {
-  $("radioPlayer").pause();
-  $("radioPlayer").removeAttribute("src");
-  $("radioPlayer").load();
-  setStatus("radioStatus", "STOPPED");
-  $("radioNow").textContent = "Hitamo radio";
-});
-
-
-/* =====================================================
-   MOVIES
-   Rwanda sources + archive catalogue + authorised links.
-===================================================== */
+/* MOVIES */
+const movies = [
+  {
+    title:"Big Buck Bunny",
+    origin:"International",
+    genre:["Animation","Comedy","Family"],
+    year:"2008",
+    description:"Openly licensed animated film by Blender Foundation.",
+    embed:"https://archive.org/embed/BigBuckBunny",
+    source:"https://peach.blender.org/",
+    license:"CC BY 3.0"
+  },
+  {
+    title:"Sintel",
+    origin:"International",
+    genre:["Animation","Adventure","Drama"],
+    year:"2010",
+    description:"Fantasy animation from the Blender Foundation.",
+    embed:"https://archive.org/embed/sintel-1280-stereo",
+    source:"https://durian.blender.org/",
+    license:"CC BY 3.0"
+  },
+  {
+    title:"Tears of Steel",
+    origin:"International",
+    genre:["Science Fiction","Action"],
+    year:"2012",
+    description:"Science-fiction film from the Blender Foundation.",
+    embed:"https://archive.org/embed/tearsofsteel",
+    source:"https://mango.blender.org/",
+    license:"CC BY 3.0"
+  },
+  {
+    title:"Elephants Dream",
+    origin:"International",
+    genre:["Animation","Drama"],
+    year:"2006",
+    description:"Open movie project from Blender Foundation.",
+    embed:"https://archive.org/embed/elephantsdream",
+    source:"https://orange.blender.org/",
+    license:"CC BY 2.5"
+  },
+  {
+    title:"The Adventures of Prince Achmed",
+    origin:"International",
+    genre:["Animation","Adventure","Family"],
+    year:"1926",
+    description:"Classic silhouette animation. Check edition rights.",
+    embed:"https://archive.org/embed/adventuresofprinceachmed",
+    source:"https://archive.org/details/adventuresofprinceachmed",
+    license:"Archive listing"
+  },
+  {
+    title:"Gertie the Dinosaur",
+    origin:"International",
+    genre:["Animation","Comedy","Family"],
+    year:"1914",
+    description:"Historic animated short film.",
+    embed:"https://archive.org/embed/gertiethedinosaur",
+    source:"https://archive.org/details/gertiethedinosaur",
+    license:"Archive listing"
+  },
+  {
+    title:"The General",
+    origin:"International",
+    genre:["Comedy","Action","Adventure"],
+    year:"1926",
+    description:"Silent-era comedy adventure classic.",
+    embed:"https://archive.org/embed/TheGeneral1926",
+    source:"https://archive.org/",
+    license:"Archive listing"
+  },
+  {
+    title:"His Girl Friday",
+    origin:"International",
+    genre:["Comedy","Drama"],
+    year:"1940",
+    description:"Classic newsroom comedy.",
+    embed:"https://archive.org/embed/his_girl_friday",
+    source:"https://archive.org/",
+    license:"Archive listing"
+  },
+  {
+    title:"Rwandan Films & Series",
+    origin:"Rwanda",
+    genre:["Rwandan Cinema","Drama"],
+    year:"Various",
+    description:"Browse films published by Rwandan creators.",
+    source:"https://amashusho.com/"
+  },
+  {
+    title:"Rwandaflix Collection",
+    origin:"Rwanda",
+    genre:["Rwandan Cinema","Comedy","Drama"],
+    year:"Various",
+    description:"Explore Kinyarwanda films and productions.",
+    source:"https://www.rwandaflix.com/"
+  },
+  {
+    title:"Rwandan Film Stories",
+    origin:"Rwanda",
+    genre:["Rwandan Cinema","Documentary"],
+    year:"Various",
+    description:"Discover Rwandan audiovisual stories.",
+    source:"https://amashusho.com/"
+  }
+];
 
 function renderMovies() {
-  const query = $("movieSearch").value.trim().toLowerCase();
-  const region = $("movieRegion").value;
+  const query = ($("movieSearch").value || "").toLowerCase();
+  const genre = $("movieGenre").value;
+  const origin = $("movieOrigin").value;
 
-  const list = MOVIE_SOURCES.filter(movie => {
-    const regionOK = region === "all" || movie.region === region;
-    const queryOK = !query ||
-      movie.name.toLowerCase().includes(query) ||
-      movie.description.toLowerCase().includes(query);
+  const list = movies.filter(movie => {
+    const matchesText =
+      (movie.title + " " + movie.description + " " + movie.genre.join(" "))
+        .toLowerCase().includes(query);
 
-    return regionOK && queryOK;
+    const matchesGenre =
+      genre === "all" || movie.genre.includes(genre);
+
+    const matchesOrigin =
+      origin === "all" || movie.origin === origin;
+
+    return matchesText && matchesGenre && matchesOrigin;
   });
 
-  $("movieList").innerHTML = list.map(movie => `
-    <article class="item-card">
-      <div class="meta">${text(movie.region.toUpperCase())} • OFFICIAL SOURCE</div>
-      <h3>${text(movie.name)}</h3>
-      <p>${text(movie.description)}</p>
-      <div class="card-actions">
-        <a class="btn pink" href="${text(movie.url)}" target="_blank" rel="noopener">OPEN SOURCE ↗</a>
+  $("movieGrid").innerHTML = list.map(movie => `
+    <article class="movie-card">
+      <div class="movie-poster">
+        <span>${escapeHTML(movie.origin)}</span>
+        ▶
+      </div>
+
+      <div class="movie-details">
+        <h3>${escapeHTML(movie.title)}</h3>
+        <p>${escapeHTML(movie.description)}</p>
+
+        <div class="movie-tags">
+          ${movie.genre.slice(0,3).map(genre =>
+            `<span>${escapeHTML(genre)}</span>`
+          ).join("")}
+          <span>${escapeHTML(movie.year)}</span>
+        </div>
+
+        ${movie.embed
+          ? `<button class="btn btn-primary" data-movie="${movies.indexOf(movie)}">Play in Player</button>`
+          : `<a class="btn btn-outline" href="${escapeHTML(movie.source)}" target="_blank" rel="noopener">Official Platform ↗</a>`
+        }
       </div>
     </article>
-  `).join("");
+  `).join("") || '<div class="empty-card">No movies match your filters.</div>';
+}
 
-  if (region === "all" || region === "archive") {
-    loadArchiveMovies(query);
+function playMovie(movie) {
+  $("movieNowPlaying").textContent = movie.title;
+  $("movieSource").href = movie.source;
+  $("movieSource").hidden = false;
+
+  if (movie.embed) {
+    $("movieFrame").src = movie.embed;
+    $("movieFrame").classList.add("show");
+    $("moviePlaceholder").style.display = "none";
+
+    $("movieMessage").textContent =
+      `${movie.license || "Publisher playback"}. Content is provided by the source platform.`;
+
+  } else {
+    $("movieFrame").src = "about:blank";
+    $("movieFrame").classList.remove("show");
+    $("moviePlaceholder").style.display = "flex";
+
+    $("movieMessage").textContent =
+      "This film opens on its official publisher platform.";
+
+    window.open(movie.source,"_blank","noopener");
   }
 }
 
-async function loadArchiveMovies(query = "") {
-  setStatus("movieStatusList", "Turimo gushaka films zo mu bubiko...");
+$("movieGrid").addEventListener("click",event => {
+  const button = event.target.closest("[data-movie]");
+  if (!button) return;
 
-  const terms = query
-    ? `collection:prelinger AND title:(${encodeURIComponent(query)})`
-    : "collection:prelinger";
-
-  const url =
-    "https://archive.org/advancedsearch.php?q=" +
-    encodeURIComponent(terms) +
-    "&fl[]=identifier&fl[]=title&fl[]=year&fl[]=description&rows=18&page=1&output=json";
-
-  try {
-    const data = await fetchJson(url);
-    const docs = data.response?.docs || [];
-
-    if (!docs.length) {
-      setStatus("movieStatusList", "Nta film ibonetse muri archive kuri ubu.");
-      return;
-    }
-
-    const archiveCards = docs.map(movie => `
-      <article class="item-card">
-        <div class="meta">ARCHIVE COLLECTION • ${text(movie.year || "Year unknown")}</div>
-        <h3>${text(movie.title || movie.identifier)}</h3>
-        <p>${text(stripHtml(movie.description || "Archive film item. Check its licence and access conditions." )).slice(0,180)}</p>
-        <div class="card-actions">
-          <button class="btn pink" data-archive-play="${text(movie.identifier)}" data-archive-title="${text(movie.title || movie.identifier)}">
-            OPEN PLAYER
-          </button>
-          <a class="card-link" href="https://archive.org/details/${encodeURIComponent(movie.identifier)}" target="_blank" rel="noopener">View rights & details ↗</a>
-        </div>
-      </article>
-    `).join("");
-
-    $("movieList").insertAdjacentHTML("beforeend", archiveCards);
-
-    document.querySelectorAll("[data-archive-play]").forEach(button => {
-      button.addEventListener("click", () => {
-        const identifier = button.dataset.archivePlay;
-        const title = button.dataset.archiveTitle;
-        playArchiveMovie(identifier, title);
-      });
-    });
-
-    setStatus(
-      "movieStatusList",
-      "Archive films loaded. Reba rights/licence kuri buri film mbere yo kuyongera kuri website yawe."
-    );
-  } catch {
-    setStatus(
-      "movieStatusList",
-      "Movie archive ntisubije ubu. Reba official sources ziri hejuru."
-    );
-  }
-}
-
-function playArchiveMovie(identifier, title) {
-  if (!identifier) return;
-
-  stopVideo("moviePlayer", "movieFrame", "movieHls");
-
-  $("movieNow").textContent = title;
-  $("movieOfficialLink").href =
-    `https://archive.org/details/${encodeURIComponent(identifier)}`;
-  $("movieOfficialLink").hidden = false;
-
-  // Internet Archive's own item player, not a copied movie file.
-  $("movieFrame").src =
-    `https://archive.org/embed/${encodeURIComponent(identifier)}`;
-  $("movieFrame").style.display = "block";
-
-  setStatus(
-    "movieStatus",
-    "Archive player yafunguwe. Access n'uburenganzira bigenwa n'iyo film."
-  );
-}
-
-$("movieSearch").addEventListener("input", () => {
-  renderMovies();
+  const movie = movies[Number(button.dataset.movie)];
+  if (movie) playMovie(movie);
 });
 
-$("movieRegion").addEventListener("change", renderMovies);
-$("searchMovies").addEventListener("click", renderMovies);
+$("movieSearch").addEventListener("input",renderMovies);
+$("movieGenre").addEventListener("change",renderMovies);
+$("movieOrigin").addEventListener("change",renderMovies);
 
-$("stopMovie").addEventListener("click", () => {
-  stopVideo("moviePlayer", "movieFrame", "movieHls");
-  setStatus("movieStatus", "STOPPED");
-});
-
-$("addMovie").addEventListener("click", () => {
-  const name = $("movieCustomName").value.trim() || "My Movie";
-  const url = $("movieCustomUrl").value.trim();
-
-  if (!validUrl(url)) {
-    setStatus("movieStatus", "Shyiramo URL yemewe.");
-    return;
-  }
-
-  $("movieNow").textContent = name;
-  $("movieOfficialLink").href = url;
-  $("movieOfficialLink").hidden = false;
-
-  playMedia(url, {
-    videoId: "moviePlayer",
-    frameId: "movieFrame",
-    hlsKey: "movieHls",
-    statusId: "movieStatus"
-  });
-
-  $("movieCustomName").value = "";
-  $("movieCustomUrl").value = "";
-});
-
-
-/* =====================================================
-   ERROR HANDLING & STARTUP
-===================================================== */
-
-window.addEventListener("online", () => {
-  setStatus("newsStatus", "Internet connection restored. Refresh news if needed.");
-});
-
-window.addEventListener("offline", () => {
-  setStatus("newsStatus", "Internet ntihari. Live services ntizikora offline.");
-});
-
-$("tvPlayer").addEventListener("error", () => {
-  setStatus("tvStatus", "TV stream ntiyakinye. Reba official link cyangwa gerageza indi stream.");
-});
-
-$("moviePlayer").addEventListener("error", () => {
-  setStatus("movieStatus", "Movie stream ntiyakinye. Reba link cyangwa uburenganzira bwo kuyireba.");
-});
-
-$("radioPlayer").addEventListener("error", () => {
-  setStatus("radioStatus", "Radio stream ntiyakinye. Gerageza indi station.");
-});
-
-// Initial screen
-renderTV();
+/* INITIAL LOAD */
 renderMovies();
 loadNews();
+loadSports();
+loadRadio();
