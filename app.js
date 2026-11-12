@@ -517,3 +517,299 @@ function initializeApp() {
   loadRadio();
 }
 document.addEventListener("DOMContentLoaded", initializeApp);
+
+/* ==========================================
+   ITT-TV: VERIFIED RWANDA LIVE CHANNELS
+   Add this code at the bottom of app.js
+========================================== */
+
+(() => {
+  const tvStations = [
+    {
+      name: "ISIBO TV",
+      url: "https://isibomedia.com/listen/tv",
+      description: "ISIBO TV Live"
+    },
+    {
+      name: "BTN TV",
+      url: "https://v2.btnrwanda.com/page/live/",
+      description: "BTN Live"
+    },
+    {
+      name: "Rwanda TV (RTV)",
+      url: "https://www.rba.co.rw/tv",
+      description: "RTV - RBA"
+    },
+    {
+      name: "B+ TV",
+      url: "https://v2.btnrwanda.com/page/live/",
+      description: "B+ Live"
+    }
+  ];
+
+  const radioStations = [
+    {
+      name: "ISIBO Radio",
+      url: "https://isibomedia.com/listen/radio"
+    },
+    {
+      name: "Radio Rwanda",
+      url: "https://www.rba.co.rw/radio/1/Radio-Rwanda"
+    }
+  ];
+
+  function createLiveSection() {
+    if (document.getElementById("rw-live-section")) return;
+
+    const style = document.createElement("style");
+
+    style.textContent = `
+      #rw-live-section {
+        background: #08111f;
+        color: #f1f6ff;
+        padding: 24px;
+        margin: 20px auto;
+        max-width: 1250px;
+        border-radius: 16px;
+        font-family: Arial, sans-serif;
+      }
+
+      #rw-live-section h2 {
+        color: #42d6c5;
+        margin: 20px 0 14px;
+      }
+
+      .rw-live-layout {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        gap: 18px;
+      }
+
+      .rw-channel-list {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+
+      .rw-channel-button {
+        background: #14243a;
+        color: white;
+        border: 1px solid #29415d;
+        border-radius: 9px;
+        padding: 14px;
+        cursor: pointer;
+        text-align: left;
+        font-size: 15px;
+      }
+
+      .rw-channel-button:hover,
+      .rw-channel-button.active {
+        background: #087e79;
+        border-color: #42d6c5;
+      }
+
+      .rw-player-area {
+        background: #000;
+        border-radius: 12px;
+        overflow: hidden;
+        min-height: 300px;
+      }
+
+      .rw-player-area iframe {
+        width: 100%;
+        height: 430px;
+        border: 0;
+        display: block;
+        background: #000;
+      }
+
+      .rw-player-message {
+        padding: 15px;
+        background: #14243a;
+        color: #cbd5e1;
+        line-height: 1.6;
+      }
+
+      .rw-open-link {
+        display: inline-block;
+        margin-top: 10px;
+        color: #42d6c5;
+        font-weight: bold;
+      }
+
+      .rw-live-label {
+        color: #ff5252;
+        font-weight: bold;
+        margin-left: 8px;
+      }
+
+      .rw-radio-list {
+        display: grid;
+        grid-template-columns:
+          repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+
+      .rw-radio-card {
+        background: #14243a;
+        padding: 17px;
+        border-radius: 10px;
+        border: 1px solid #29415d;
+      }
+
+      .rw-radio-card button {
+        margin-top: 10px;
+        background: #087e79;
+        color: white;
+        border: 0;
+        padding: 10px 15px;
+        border-radius: 7px;
+        cursor: pointer;
+      }
+
+      @media(max-width: 700px) {
+        #rw-live-section {
+          padding: 14px;
+        }
+
+        .rw-live-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .rw-channel-list {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .rw-player-area iframe {
+          height: 260px;
+        }
+      }
+    `;
+
+    document.head.appendChild(style);
+
+    const section = document.createElement("section");
+    section.id = "rw-live-section";
+
+    section.innerHTML = `
+      <h2>🇷🇼 Rwanda TV Channels</h2>
+
+      <div class="rw-live-layout">
+        <div class="rw-channel-list" id="rw-tv-list"></div>
+
+        <div>
+          <div class="rw-player-area" id="rw-tv-player">
+            <div class="rw-player-message">
+              Hitamo televiziyo kugira ngo urebe niba Live player yayo
+              ifunguka hano.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2>🇷🇼 Rwanda Radio Stations</h2>
+
+      <div class="rw-radio-list" id="rw-radio-list"></div>
+
+      <div class="rw-player-area" id="rw-radio-player"
+           style="margin-top:15px">
+        <div class="rw-player-message">
+          Hitamo radiyo kugira ngo wumve ibiganiro byayo.
+        </div>
+      </div>
+    `;
+
+    const existingTV = document.getElementById("tv");
+
+    if (existingTV) {
+      existingTV.appendChild(section);
+    } else {
+      document.body.appendChild(section);
+    }
+
+    renderTV();
+    renderRadio();
+  }
+
+  function showOfficialPlayer(station, playerId, button) {
+    const player = document.getElementById(playerId);
+
+    if (!player) return;
+
+    player.innerHTML = `
+      <iframe
+        src="${station.url}"
+        title="${station.name}"
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="strict-origin-when-cross-origin">
+      </iframe>
+
+      <div class="rw-player-message">
+        <strong>${station.name}</strong>
+        <span class="rw-live-label">LIVE</span>
+        <br>
+        Niba player itagaragara, fungura urubuga rwemewe:
+        <br>
+        <a class="rw-open-link"
+           href="${station.url}"
+           target="_blank"
+           rel="noopener noreferrer">
+           Fungura ${station.name} hanze
+        </a>
+      </div>
+    `;
+
+    document.querySelectorAll(".rw-channel-button")
+      .forEach(btn => btn.classList.remove("active"));
+
+    if (button) button.classList.add("active");
+  }
+
+  function renderTV() {
+    const list = document.getElementById("rw-tv-list");
+    if (!list) return;
+
+    tvStations.forEach(station => {
+      const button = document.createElement("button");
+      button.className = "rw-channel-button";
+      button.textContent = "📺 " + station.name;
+
+      button.addEventListener("click", () => {
+        showOfficialPlayer(station, "rw-tv-player", button);
+      });
+
+      list.appendChild(button);
+    });
+  }
+
+  function renderRadio() {
+    const list = document.getElementById("rw-radio-list");
+    if (!list) return;
+
+    radioStations.forEach(station => {
+      const card = document.createElement("div");
+      card.className = "rw-radio-card";
+
+      card.innerHTML = `
+        <strong>📻 ${station.name}</strong>
+        <br>
+        <button type="button">Tega Radio</button>
+      `;
+
+      card.querySelector("button").addEventListener("click", () => {
+        showOfficialPlayer(station, "rw-radio-player");
+      });
+
+      list.appendChild(card);
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", createLiveSection);
+  } else {
+    createLiveSection();
+  }
+})();
