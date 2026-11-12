@@ -1,254 +1,349 @@
+
 <!DOCTYPE html>
-<html lang="rw">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#08111f">
-  <meta name="description" content="ITT NEWS - Rwanda and World Live TV, Radio, News and Movies">
-  <title>ITT NEWS | World Live</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
+  <meta name="description" content="ITT NEWS - News, Sports, Live TV, Radio and Movies">
+  <title>ITT NEWS | Home</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="#" data-page="home"><span>ITT</span> NEWS</a>
-    <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-    <nav id="mainNav">
-      <button class="nav-btn active" data-page="home">Home</button>
-      <button class="nav-btn" data-page="news">News</button>
-      <button class="nav-btn" data-page="tv">Live TV</button>
-      <button class="nav-btn" data-page="radio">Live Radio</button>
-      <button class="nav-btn" data-page="movies">Movies</button>
-    </nav>
-  </header>
 
-  <main class="container">
-    <!-- HOME -->
-    <section id="home" class="page active">
-      <div class="hero">
-        <div class="eyebrow">RWANDA • AFRICA • WORLD</div>
-        <h1>Everything Live.<br><span>All in one place.</span></h1>
-        <p>Amakuru, televiziyo, amaradiyo na filime kuri ITT NEWS.</p>
-        <div class="hero-actions">
-          <button class="btn red" data-go="news">SOMA AMAKURU</button>
-          <button class="btn blue" data-go="tv">REBA LIVE TV</button>
-          <button class="btn green" data-go="radio">UMVA RADIO</button>
-        </div>
+<header class="topbar">
+  <a class="brand" href="#home">
+    <span class="brand-mark">ITT</span>
+    <span>NEWS<span class="brand-dot">.</span></span>
+  </a>
+
+  <button class="menu-toggle" id="menuToggle">☰</button>
+
+  <nav id="mainNav" class="main-nav">
+    <a href="#home" class="nav-link active" data-page="home">Home</a>
+    <a href="#news" class="nav-link" data-page="news">News</a>
+    <a href="#sports" class="nav-link" data-page="sports">Sports</a>
+    <a href="#tv" class="nav-link" data-page="tv">Live TV</a>
+    <a href="#radio" class="nav-link" data-page="radio">Live Radio</a>
+    <a href="#movies" class="nav-link" data-page="movies">Movies</a>
+  </nav>
+
+  <div class="top-actions">
+    <span class="live-indicator"><i></i> LIVE</span>
+    <span id="todayDate" class="date-label"></span>
+  </div>
+</header>
+
+<main>
+
+<!-- HOME -->
+<section id="home" class="page-section active-page">
+  <div class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow">RWANDA • AFRICA • THE WORLD</p>
+      <h1>Your world.<br><span>One destination.</span></h1>
+      <p class="hero-text">
+        Latest headlines, sports updates, live television,
+        radio stations and movies in one place.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="#news">Explore News</a>
+        <a class="btn btn-outline" href="#tv">Watch Live TV</a>
+      </div>
+    </div>
+
+    <div class="hero-side">
+      <div class="hero-orbit orbit-one"></div>
+      <div class="hero-orbit orbit-two"></div>
+      <div class="hero-logo">
+        ITT<span>NEWS</span>
+        <small>INFORMATION • ENTERTAINMENT</small>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">DISCOVER</p>
+      <h2>Explore ITT NEWS</h2>
+    </div>
+  </div>
+
+  <div class="feature-grid">
+    <a class="feature-card" href="#news">
+      <span class="feature-icon">▤</span>
+      <h3>Latest News</h3>
+      <p>Rwanda and international headlines.</p>
+      <b>Explore →</b>
+    </a>
+
+    <a class="feature-card" href="#sports">
+      <span class="feature-icon">⚽</span>
+      <h3>Sports</h3>
+      <p>Football and global sports coverage.</p>
+      <b>Explore →</b>
+    </a>
+
+    <a class="feature-card" href="#tv">
+      <span class="feature-icon">▣</span>
+      <h3>Live TV</h3>
+      <p>Rwandan and international channels.</p>
+      <b>Watch →</b>
+    </a>
+
+    <a class="feature-card" href="#radio">
+      <span class="feature-icon">♫</span>
+      <h3>Live Radio</h3>
+      <p>Listen to stations from Rwanda.</p>
+      <b>Listen →</b>
+    </a>
+
+    <a class="feature-card" href="#movies">
+      <span class="feature-icon">▶</span>
+      <h3>Movies</h3>
+      <p>Films, animation and cinema.</p>
+      <b>Watch →</b>
+    </a>
+  </div>
+
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">TOP STORIES</p>
+      <h2>Latest Headlines</h2>
+    </div>
+    <a class="text-link" href="#news">All News →</a>
+  </div>
+
+  <div id="homeNews" class="news-grid">
+    <div class="loading-card">Loading headlines...</div>
+  </div>
+</section>
+
+<!-- NEWS -->
+<section id="news" class="page-section">
+  <div class="page-title">
+    <p class="eyebrow">STAY INFORMED</p>
+    <h1>Latest <span>News</span></h1>
+    <p>Headlines from Rwanda and around the world.</p>
+  </div>
+
+  <div class="toolbar">
+    <input id="newsSearch" type="search" placeholder="Search headlines...">
+    <select id="newsRegion">
+      <option value="all">All News</option>
+      <option value="rwanda">Rwanda</option>
+      <option value="world">World</option>
+    </select>
+    <button id="refreshNews" class="btn btn-primary">Refresh</button>
+  </div>
+
+  <div id="newsStatus" class="status-line">Loading news...</div>
+  <div id="newsGrid" class="news-grid"></div>
+</section>
+
+<!-- SPORTS -->
+<section id="sports" class="page-section">
+  <div class="page-title">
+    <p class="eyebrow">MATCHES • TEAMS • RESULTS</p>
+    <h1>Sports <span>Center</span></h1>
+    <p>Sports headlines from Rwanda and the world.</p>
+  </div>
+
+  <div class="toolbar">
+    <input id="sportsSearch" type="search" placeholder="Search sports...">
+    <button id="refreshSports" class="btn btn-primary">Refresh Sports</button>
+  </div>
+
+  <div id="sportsStatus" class="status-line">Loading sports...</div>
+  <div id="sportsGrid" class="news-grid"></div>
+</section>
+
+<!-- TV -->
+<section id="tv" class="page-section">
+  <div class="page-title">
+    <p class="eyebrow">WATCH LIVE</p>
+    <h1>Live <span>Television</span></h1>
+    <p>Rwanda and international television channels.</p>
+  </div>
+
+  <div class="player-layout">
+    <div class="main-player-card">
+      <div class="player-top">
+        <span class="live-indicator"><i></i> ON AIR</span>
+        <span id="tvNowPlaying">Select a channel</span>
       </div>
 
-      <div class="quick-grid">
-        <button class="quick-card news-card" data-go="news">
-          <span>01</span><strong>WORLD NEWS</strong><small>Rwanda & International</small>
-        </button>
-        <button class="quick-card tv-card" data-go="tv">
-          <span>02</span><strong>LIVE TELEVISION</strong><small>Watch channels in the player</small>
-        </button>
-        <button class="quick-card radio-card" data-go="radio">
-          <span>03</span><strong>LIVE RADIO</strong><small>Listen around the world</small>
-        </button>
-        <button class="quick-card movie-card" data-go="movies">
-          <span>04</span><strong>MOVIES</strong><small>Rwanda & International</small>
-        </button>
-      </div>
-
-      <div class="notice">
-        <strong>ITT NEWS:</strong> Channels and stations are supplied by their broadcasters
-        or public directories. Some providers block playback on other websites.
-        Such channels will show their official page instead of a fake player.
-      </div>
-    </section>
-
-    <!-- NEWS -->
-    <section id="news" class="page">
-      <div class="section-heading">
-        <div class="eyebrow">LATEST UPDATES</div>
-        <h1>World <span class="red-text">News</span></h1>
-        <p>Amakuru yo mu Rwanda no mu mahanga.</p>
-      </div>
-
-      <div class="toolbar">
-        <input id="newsSearch" type="search" placeholder="Shakisha inkuru...">
-        <select id="newsRegion">
-          <option value="all">Amakuru yose</option>
-          <option value="rwanda">Rwanda</option>
-          <option value="world">International</option>
-        </select>
-        <button id="refreshNews" class="btn red">REFRESH</button>
-      </div>
-
-      <div id="newsStatus" class="status">Turimo gushaka amakuru...</div>
-      <div id="newsList" class="content-grid"></div>
-      <div class="center">
-        <button id="moreNews" class="btn secondary">Andi makuru</button>
-      </div>
-
-      <div id="newsReader" class="reader" hidden>
-        <div class="reader-head">
-          <h2 id="readerTitle">News</h2>
-          <button id="closeReader" class="small-btn">FUNGA ✕</button>
-        </div>
-        <p id="readerMeta" class="muted"></p>
-        <div id="readerBody" class="reader-body"></div>
-        <a id="readerSource" class="btn red" href="#" target="_blank" rel="noopener">Soma inkuru yuzuye ku isoko yayo</a>
-      </div>
-    </section>
-
-    <!-- TV -->
-    <section id="tv" class="page">
-      <div class="section-heading">
-        <div class="eyebrow">WATCH AROUND THE WORLD</div>
-        <h1>Live <span class="blue-text">TV</span></h1>
-        <p>Hitamo channel. Iyo ifite stream cyangwa embed yemerewe, irakinira hano.</p>
-      </div>
-
-      <div class="toolbar">
-        <input id="tvSearch" type="search" placeholder="Shakisha TV...">
-        <select id="tvRegion">
-          <option value="all">Ibihugu byose</option>
-          <option value="Rwanda">Rwanda</option>
-          <option value="International">International</option>
-        </select>
-      </div>
-
-      <div id="tvList" class="content-grid"></div>
-
-      <div class="player-panel">
-        <div class="player-title">
-          <div><div class="eyebrow">LIVE PLAYER</div><h2 id="tvNow">TV Player</h2></div>
-          <span id="tvStatus" class="live-status">READY</span>
-        </div>
-        <video id="tvPlayer" controls playsinline preload="none"></video>
-        <iframe id="tvFrame" title="Television player"
+      <div class="video-wrap">
+        <iframe id="tvFrame" title="ITT NEWS TV Player"
+          src="about:blank"
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
           allowfullscreen></iframe>
-        <div class="player-controls">
-          <button id="stopTV" class="small-btn">STOP</button>
-          <a id="tvOfficialLink" class="small-btn link-button" href="#" target="_blank" rel="noopener" hidden>OFFICIAL WEBSITE ↗</a>
+
+        <video id="tvVideo" controls playsinline></video>
+
+        <div id="tvPlaceholder" class="player-placeholder">
+          <span>▣</span>
+          <h3>ITT NEWS TV PLAYER</h3>
+          <p>Select a channel below.</p>
         </div>
       </div>
 
-      <div class="manual-panel">
-        <h2>Ongeramo stream yemewe</h2>
-        <p class="muted">Shyiramo direct MP4/M3U8 cyangwa YouTube live link ufitiye uburenganzira.</p>
-        <div class="toolbar">
-          <input id="tvCustomName" type="text" placeholder="Izina rya TV">
-          <input id="tvCustomUrl" type="url" placeholder="https://...">
-          <button id="addTV" class="btn blue">ADD & PLAY</button>
-        </div>
+      <div class="player-bottom">
+        <span id="tvMessage">Choose a television channel.</span>
+        <a id="tvExternal" class="text-link" href="#" target="_blank" hidden>
+          Open Official Channel ↗
+        </a>
       </div>
-    </section>
+    </div>
 
-    <!-- RADIO -->
-    <section id="radio" class="page">
-      <div class="section-heading">
-        <div class="eyebrow">LISTEN LIVE</div>
-        <h1>Live <span class="green-text">Radio</span></h1>
-        <p>Shakisha radio zo mu Rwanda no mu bihugu byose ku isi.</p>
+    <aside class="side-panel">
+      <h3>Rwanda TV Channels</h3>
+      <p class="muted">Official channel pages</p>
+      <div id="rwandaTvList" class="channel-list"></div>
+    </aside>
+  </div>
+
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">MORE CHANNELS</p>
+      <h2>International TV</h2>
+    </div>
+    <input id="tvSearch" class="compact-search" type="search" placeholder="Find channel...">
+  </div>
+
+  <div id="internationalTvList" class="channel-grid"></div>
+
+  <p class="notice">
+    Some broadcasters block third-party embedding. Those channels
+    open their official websites instead of pretending to play
+    inside this player.
+  </p>
+</section>
+
+<!-- RADIO -->
+<section id="radio" class="page-section">
+  <div class="page-title">
+    <p class="eyebrow">LISTEN LIVE</p>
+    <h1>Rwanda <span>Radio</span></h1>
+    <p>Find stations and listen in the ITT NEWS player.</p>
+  </div>
+
+  <div class="radio-player-card">
+    <div class="radio-art">♫</div>
+    <div class="radio-info">
+      <span class="live-indicator"><i></i> LIVE RADIO</span>
+      <h2 id="radioNowPlaying">Choose a radio station</h2>
+      <p id="radioDescription">Rwanda radio directory</p>
+      <audio id="radioPlayer" controls preload="none"></audio>
+      <p id="radioStatus" class="status-line">Loading stations...</p>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input id="radioSearch" type="search" placeholder="Search station...">
+    <button id="refreshRadio" class="btn btn-primary">Refresh Stations</button>
+  </div>
+
+  <div id="radioGrid" class="radio-grid"></div>
+</section>
+
+<!-- MOVIES -->
+<section id="movies" class="page-section">
+  <div class="page-title">
+    <p class="eyebrow">RWANDA • WORLD CINEMA</p>
+    <h1>Movie <span>Library</span></h1>
+    <p>Browse movies by category and country.</p>
+  </div>
+
+  <div class="movie-player-card">
+    <div class="movie-player-heading">
+      <div>
+        <span class="eyebrow">NOW PLAYING</span>
+        <h2 id="movieNowPlaying">Choose a movie</h2>
       </div>
+      <a id="movieSource" class="text-link" href="#" target="_blank" hidden>
+        Official Source ↗
+      </a>
+    </div>
 
-      <div class="player-panel audio-panel">
-        <div class="player-title">
-          <div><div class="eyebrow">NOW PLAYING</div><h2 id="radioNow">Hitamo radio</h2></div>
-          <span id="radioStatus" class="live-status">READY</span>
-        </div>
-        <audio id="radioPlayer" controls preload="none"></audio>
-        <p id="radioDetails" class="muted">Radio izumvikanira muri iyi player.</p>
-        <button id="stopRadio" class="small-btn">STOP RADIO</button>
+    <div class="video-wrap movie-video-wrap">
+      <iframe id="movieFrame" title="ITT NEWS Movie Player"
+        src="about:blank"
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        allowfullscreen></iframe>
+
+      <div id="moviePlaceholder" class="player-placeholder">
+        <span>▶</span>
+        <h3>ITT NEWS MOVIE PLAYER</h3>
+        <p>Select a movie that supports in-page playback.</p>
       </div>
+    </div>
 
-      <div class="toolbar">
-        <input id="radioSearch" type="search" placeholder="Izina rya radio cyangwa ubwoko bwayo...">
-        <select id="radioCountry">
-          <option value="Rwanda">Rwanda</option>
-          <option value="">Ibihugu byose</option>
-          <option value="Kenya">Kenya</option>
-          <option value="Uganda">Uganda</option>
-          <option value="Tanzania">Tanzania</option>
-          <option value="Burundi">Burundi</option>
-          <option value="Nigeria">Nigeria</option>
-          <option value="South Africa">South Africa</option>
-          <option value="United States">United States</option>
-          <option value="United Kingdom">United Kingdom</option>
-          <option value="France">France</option>
-          <option value="Germany">Germany</option>
-          <option value="India">India</option>
-          <option value="Japan">Japan</option>
-        </select>
-        <button id="searchRadio" class="btn green">SHAKISHA</button>
-      </div>
-      <div class="toolbar compact">
-        <button class="small-btn radio-preset" data-country="Rwanda">Rwanda</button>
-        <button class="small-btn radio-preset" data-country="Kenya">Kenya</button>
-        <button class="small-btn radio-preset" data-country="Uganda">Uganda</button>
-        <button class="small-btn radio-preset" data-country="Nigeria">Nigeria</button>
-        <button class="small-btn radio-preset" data-country="">World</button>
-      </div>
-      <div id="radioStatusList" class="status">Tegereza...</div>
-      <div id="radioList" class="content-grid"></div>
-      <div class="center">
-        <button id="moreRadio" class="btn secondary">Andi maradiyo</button>
-      </div>
-    </section>
+    <p id="movieMessage" class="notice">
+      Playback is provided by the original film publisher.
+    </p>
+  </div>
 
-    <!-- MOVIES -->
-    <section id="movies" class="page">
-      <div class="section-heading">
-        <div class="eyebrow">RWANDA & INTERNATIONAL CINEMA</div>
-        <h1>Movie <span class="pink-text">Zone</span></h1>
-        <p>Filime n'ibiganiro biri ku masoko yemewe.</p>
-      </div>
+  <div class="toolbar movie-toolbar">
+    <input id="movieSearch" type="search" placeholder="Search movies...">
 
-      <div class="toolbar">
-        <input id="movieSearch" type="search" placeholder="Shakisha filime...">
-        <select id="movieRegion">
-          <option value="all">Zose</option>
-          <option value="rwanda">Rwanda</option>
-          <option value="world">International</option>
-          <option value="archive">Public collection</option>
-        </select>
-        <button id="searchMovies" class="btn pink">SHAKISHA</button>
-      </div>
+    <select id="movieGenre">
+      <option value="all">All Genres</option>
+      <option>Animation</option>
+      <option>Action</option>
+      <option>Comedy</option>
+      <option>Adventure</option>
+      <option>Drama</option>
+      <option>Documentary</option>
+      <option>Family</option>
+      <option>Science Fiction</option>
+      <option>Rwandan Cinema</option>
+    </select>
 
-      <div id="movieStatusList" class="status">Filime ziri gutegurwa...</div>
-      <div id="movieList" class="content-grid"></div>
+    <select id="movieOrigin">
+      <option value="all">All Origins</option>
+      <option value="Rwanda">Rwanda</option>
+      <option value="International">International</option>
+    </select>
+  </div>
 
-      <div class="player-panel">
-        <div class="player-title">
-          <div><div class="eyebrow">MOVIE PLAYER</div><h2 id="movieNow">Movie Player</h2></div>
-          <span id="movieStatus" class="live-status">READY</span>
-        </div>
-        <video id="moviePlayer" controls playsinline preload="none"></video>
-        <iframe id="movieFrame" title="Movie player"
-          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-          allowfullscreen></iframe>
-        <div class="player-controls">
-          <button id="stopMovie" class="small-btn">STOP</button>
-          <a id="movieOfficialLink" class="small-btn link-button" href="#" target="_blank" rel="noopener" hidden>OFFICIAL SOURCE ↗</a>
-        </div>
-      </div>
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">WATCH & DISCOVER</p>
+      <h2>Films and Collections</h2>
+    </div>
+  </div>
 
-      <div class="manual-panel">
-        <h2>Shyiramo filime ifite stream yemewe</h2>
-        <div class="toolbar">
-          <input id="movieCustomName" type="text" placeholder="Izina rya filime">
-          <input id="movieCustomUrl" type="url" placeholder="MP4, M3U8 cyangwa YouTube URL">
-          <button id="addMovie" class="btn pink">PLAY MOVIE</button>
-        </div>
-      </div>
+  <div id="movieGrid" class="movie-grid"></div>
 
-      <div class="notice">
-        Filime nshya ziri mu burenganzira bw'abazikoze ntizishobora gushyirwa kuri ITT NEWS
-        nta ruhushya. Iyi website izerekana official source cyangwa player yemerewe.
-      </div>
-    </section>
-  </main>
+  <div class="partner-banner">
+    <div>
+      <p class="eyebrow">RWANDAN FILMMAKERS</p>
+      <h2>Discover Rwandan Films</h2>
+      <p>Explore films published by Rwandan creators.</p>
+    </div>
+    <a class="btn btn-primary" href="https://amashusho.com/"
+       target="_blank" rel="noopener">Explore Amashusho ↗</a>
+  </div>
+</section>
 
-  <footer>
-    <strong>ITT NEWS</strong>
-    <span>News • Live TV • Live Radio • Movies</span>
-    <span>© <span id="year"></span> ITT NEWS</span>
-  </footer>
+</main>
 
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
-  <script src="app.js"></script>
+<footer class="footer">
+  <div class="brand">
+    <span class="brand-mark">ITT</span>
+    <span>NEWS<span class="brand-dot">.</span></span>
+  </div>
+  <p>News • Sports • Television • Radio • Movies</p>
+  <small>© <span id="year"></span> ITT NEWS</small>
+</footer>
+
+<div id="toast" class="toast" role="status"></div>
+
+<script src="app.js"></script>
 </body>
 </html>
