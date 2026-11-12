@@ -1,815 +1,210 @@
-/* =========================================================
-   ITT-TV application
-   News: Google News RSS via RSS2JSON (external feed service)
-   Radio: Radio Browser public API
-   TV: public M3U playlist + HLS.js
-   Movies: openly available sample films
-   ========================================================= */
-"use strict";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#081525">
+  <meta name="description" content="ITT-TV — news, sports, public live TV, worldwide radio and free films.">
+  <title>ITT-TV | News, Live TV, Radio & Movies</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="announcement" id="announcement">
+    <span class="live-dot"></span>
+    <span>ITT-TV · Your window to Rwanda and the world</span>
+    <button class="announcement-close" id="closeAnnouncement" aria-label="Close announcement">×</button>
+  </div>
 
-const CONFIG = {
-  newsFeeds: [
-    { name: "Rwanda", category: "Rwanda", url: "https://news.google.com/rss/search?q=Rwanda&hl=en&gl=RW&ceid=RW:en" },
-    { name: "Africa", category: "Africa", url: "https://news.google.com/rss/headlines/section/topic/WORLD_AFRICA?hl=en&gl=US&ceid=US:en" },
-    { name: "World", category: "World", url: "https://news.google.com/rss/headlines/section/topic/WORLD?hl=en&gl=US&ceid=US:en" },
-    { name: "Business", category: "Business", url: "https://news.google.com/rss/headlines/section/topic/BUSINESS?hl=en&gl=US&ceid=US:en" },
-    { name: "Technology", category: "Technology", url: "https://news.google.com/rss/headlines/section/topic/TECHNOLOGY?hl=en&gl=US&ceid=US:en" },
-    { name: "Sports", category: "Sports", url: "https://news.google.com/rss/headlines/section/topic/SPORTS?hl=en&gl=US&ceid=US:en" }
-  ],
-  tvPlaylist: "https://raw.githubusercontent.com/freecasthub/public-iptv/main/playlist.m3u",
-  radioApi: "https://de1.api.radio-browser.info/json",
-  radioLimit: 120,
-  tvLimit: 500
-};
+  <header class="site-header">
+    <a class="brand" href="#home" aria-label="ITT-TV home">
+      <span class="brand-mark">ITT</span><span class="brand-dash">-</span><span class="brand-tv">TV</span>
+      <small>WORLD MEDIA</small>
+    </a>
+    <button class="menu-toggle" id="menuToggle" aria-label="Open navigation" aria-expanded="false">☰</button>
+    <nav class="main-nav" id="mainNav">
+      <a class="nav-link active" href="#home">Home</a>
+      <a class="nav-link" href="#news">News</a>
+      <a class="nav-link" href="#sports">Sports</a>
+      <a class="nav-link" href="#tv">Live TV</a>
+      <a class="nav-link" href="#radio">Radio</a>
+      <a class="nav-link" href="#movies">Movies</a>
+      <a class="nav-link" href="#about">About</a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-button" id="globalSearchToggle" aria-label="Search">⌕</button>
+      <span class="header-live"><i></i> ON AIR</span>
+    </div>
+  </header>
 
-const state = {
-  news: [],
-  newsCategory: "all",
-  newsVisible: 12,
-  tv: [],
-  radio: [],
-  selectedTV: null,
-  selectedRadio: null,
-  selectedMovie: null,
-  hls: null
-};
+  <div class="global-search-wrap hidden" id="globalSearchWrap">
+    <label class="sr-only" for="globalSearch">Search ITT-TV</label>
+    <input id="globalSearch" type="search" placeholder="Search news, TV channels, radio stations...">
+    <button class="button button-primary" id="globalSearchButton">Search</button>
+  </div>
 
-const $ = (id) => document.getElementById(id);
-const safeText = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
-  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-}[char]));
-const shortDate = (value) => {
-  const date = value ? new Date(value) : null;
-  return date && !Number.isNaN(date.getTime())
-    ? date.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
-    : "Latest";
-};
-const showToast = (message) => {
-  const toast = $("toast");
-  if (!toast) return;
-  toast.textContent = message;
-  toast.classList.add("show");
-  window.setTimeout(() => toast.classList.remove("show"), 2600);
-};
-const setMessage = (id, message) => {
-  const element = $(id);
-  if (element) element.textContent = message;
-};
-const uniqueBy = (items, keyFn) => {
-  const seen = new Set();
-  return items.filter((item) => {
-    const key = keyFn(item);
-    if (!key || seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-};
-const timeoutFetch = async (url, options = {}, timeout = 14000) => {
-  const controller = new AbortController();
-  const timer = window.setTimeout(() => controller.abort(), timeout);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal, cache: "no-store" });
-  } finally {
-    window.clearTimeout(timer);
-  }
-};
-
-/* ---------------------------------------------------------
-   Navigation and shared controls
-   --------------------------------------------------------- */
-function setupNavigation() {
-  const toggle = $("menuToggle");
-  const nav = $("mainNav");
-  toggle?.addEventListener("click", () => {
-    const open = nav.classList.toggle("open");
-    toggle.setAttribute("aria-expanded", String(open));
-  });
-  nav?.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", () => nav.classList.remove("open"));
-  });
-  $("closeAnnouncement")?.addEventListener("click", () => $("announcement")?.remove());
-  $("globalSearchToggle")?.addEventListener("click", () => {
-    $("globalSearchWrap")?.classList.toggle("hidden");
-    $("globalSearch")?.focus();
-  });
-  $("globalSearchButton")?.addEventListener("click", runGlobalSearch);
-  $("globalSearch")?.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") runGlobalSearch();
-  });
-  $("year").textContent = new Date().getFullYear();
-  const sections = [...document.querySelectorAll("main section[id]")];
-  if ("IntersectionObserver" in window) {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        document.querySelectorAll(".nav-link").forEach((link) => {
-          link.classList.toggle("active", link.getAttribute("href") === `#${entry.target.id}`);
-        });
-      });
-    }, { rootMargin: "-35% 0px -55% 0px" });
-    sections.forEach((section) => observer.observe(section));
-  }
-}
-function runGlobalSearch() {
-  const query = $("globalSearch")?.value.trim();
-  if (!query) return;
-  $("newsSearch").value = query;
-  $("tvSearch").value = query;
-  $("radioSearch").value = query;
-  renderNews();
-  renderTV();
-  renderRadio();
-  $("news").scrollIntoView({ behavior: "smooth" });
-}
-
-/* ---------------------------------------------------------
-   NEWS — feed loading, filtering and cards
-   --------------------------------------------------------- */
-async function fetchNewsFeed(feed) {
-  const endpoint = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed.url)}`;
-  const response = await timeoutFetch(endpoint);
-  if (!response.ok) throw new Error(`Feed request failed: ${response.status}`);
-  const data = await response.json();
-  if (data.status !== "ok" || !Array.isArray(data.items)) {
-    throw new Error(data.message || "News feed is not available");
-  }
-  return data.items.map((item) => ({
-    title: item.title || "Untitled story",
-    description: stripHTML(item.description || item.content || "").slice(0, 220),
-    link: item.link || "https://news.google.com/",
-    image: item.thumbnail || extractImage(item.content || item.description || ""),
-    date: item.pubDate || "",
-    source: item.author || feed.name,
-    category: feed.category
-  }));
-}
-function stripHTML(value) {
-  const node = document.createElement("div");
-  node.innerHTML = value;
-  return (node.textContent || node.innerText || "").replace(/\s+/g, " ").trim();
-}
-function extractImage(html) {
-  const match = String(html).match(/<img[^>]+src=["']([^"']+)/i);
-  return match ? match[1] : "";
-}
-async function loadNews() {
-  setMessage("newsStatus", "Loading news from available RSS feeds…");
-  $("newsGrid").innerHTML = '<div class="empty-state">Fetching headlines…</div>';
-  const results = await Promise.allSettled(CONFIG.newsFeeds.map(fetchNewsFeed));
-  const loaded = results.filter((result) => result.status === "fulfilled").flatMap((result) => result.value);
-  state.news = uniqueBy(loaded, (item) => item.link || item.title);
-  state.newsVisible = 12;
-  if (state.news.length) {
-    setMessage("newsStatus", `${state.news.length} headlines loaded · Open a story to read it from its publisher.`);
-    updateTicker();
-    renderNews();
-    renderSports();
-  } else {
-    setMessage("newsStatus", "Live feeds could not be reached. Check your connection and try refreshing.");
-    $("newsGrid").innerHTML = '<div class="empty-state">News feeds are temporarily unavailable. Use Refresh News to try again. You can still visit <a class="text-link" href="https://news.google.com/" target="_blank" rel="noopener noreferrer">Google News ↗</a>.</div>';
-    $("sportsList").innerHTML = '<div class="empty-state">Sports feed unavailable right now. Try refreshing later.</div>';
-  }
-}
-function getFilteredNews() {
-  const query = $("newsSearch").value.trim().toLowerCase();
-  return state.news.filter((item) => {
-    const categoryMatch = state.newsCategory === "all" || item.category === state.newsCategory;
-    const text = `${item.title} ${item.description} ${item.source} ${item.category}`.toLowerCase();
-    return categoryMatch && (!query || text.includes(query));
-  });
-}
-function renderNews() {
-  const items = getFilteredNews().slice(0, state.newsVisible);
-  const grid = $("newsGrid");
-  if (!items.length) {
-    grid.innerHTML = '<div class="empty-state">No matching headlines. Change the filter or search another word.</div>';
-    return;
-  }
-  grid.innerHTML = items.map((item) => `
-    <article class="news-card">
-      <div class="news-image">
-        ${item.image ? `<img src="${safeText(item.image)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">` : '<span class="image-placeholder">▤</span>'}
-        <span class="news-tag">${safeText(item.category)}</span>
+  <main>
+    <section class="hero section-shell" id="home">
+      <div class="hero-copy">
+        <span class="eyebrow"><span class="live-dot"></span> CONNECTED TO THE WORLD</span>
+        <h1>Stories that matter.<br><span>Streams that move you.</span></h1>
+        <p>Follow the latest headlines, explore public live television, listen to radio stations from around the world and discover free-to-watch films.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#news">Explore the news <span>↗</span></a>
+          <a class="button button-ghost" href="#tv">Watch live TV <span>▶</span></a>
+        </div>
+        <div class="hero-proof">
+          <span><b>01</b> Rwanda & Africa</span>
+          <span><b>02</b> Global coverage</span>
+          <span><b>03</b> Free public streams</span>
+        </div>
       </div>
-      <div class="news-content">
-        <div class="news-meta"><span>${safeText(item.source)}</span><span>${safeText(shortDate(item.date))}</span></div>
-        <h3>${safeText(item.title)}</h3>
-        <p>${safeText(item.description || "Open the original publisher for the full report.")}</p>
-        <a class="text-link" href="${safeText(item.link)}" target="_blank" rel="noopener noreferrer">Read full story ↗</a>
+      <div class="hero-art" aria-label="News and media illustration">
+        <div class="art-orbit orbit-one"></div>
+        <div class="art-orbit orbit-two"></div>
+        <div class="art-card art-card-main">
+          <div class="art-card-top"><span class="live-pill"><i></i> LIVE</span><span>WORLD DESK</span></div>
+          <div class="art-globe">◎</div>
+          <div class="art-card-bottom"><strong>THE WORLD<br>IN ONE PLACE</strong><span>ITT-TV</span></div>
+        </div>
+        <div class="floating-tag tag-news">▤ <span>NEWS</span></div>
+        <div class="floating-tag tag-radio">♫ <span>RADIO</span></div>
+        <div class="floating-tag tag-play">▶ <span>LIVE TV</span></div>
       </div>
-    </article>`).join("");
-  $("loadMoreNews").classList.toggle("hidden", getFilteredNews().length <= state.newsVisible);
-}
-function updateTicker() {
-  const titles = state.news.slice(0, 10).map((item) => safeText(item.title));
-  $("tickerTrack").innerHTML = `<span>${titles.join("　 •　 ") || "Welcome to ITT-TV"}</span>`;
-}
-function renderSports() {
-  const items = state.news.filter((item) => item.category === "Sports").slice(0, 5);
-  $("sportsList").innerHTML = items.length ? items.map((item) => `
-    <a class="sport-row" href="${safeText(item.link)}" target="_blank" rel="noopener noreferrer">
-      <span class="sport-row-icon">⚽</span>
-      <span><h4>${safeText(item.title)}</h4><small>${safeText(item.source)} · ${safeText(shortDate(item.date))}</small></span>
-    </a>`).join("") : '<div class="empty-state">Sports headlines will appear when the sports feed is available.</div>';
-}
-function setupNewsControls() {
-  $("refreshNews").addEventListener("click", loadNews);
-  $("newsSearch").addEventListener("input", renderNews);
-  $("loadMoreNews").addEventListener("click", () => {
-    state.newsVisible += 12;
-    renderNews();
-  });
-  $("newsFilters").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-category]");
-    if (!button) return;
-    state.newsCategory = button.dataset.category;
-    $("newsFilters").querySelectorAll("button").forEach((item) => item.classList.toggle("selected", item === button));
-    state.newsVisible = 12;
-    renderNews();
-  });
-}
+    </section>
 
-/* ---------------------------------------------------------
-   TELEVISION — M3U parsing and HLS playback
-   --------------------------------------------------------- */
-function parseM3U(content) {
-  const lines = content.split(/\r?\n/);
-  const channels = [];
-  let pending = null;
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line) continue;
-    if (line.startsWith("#EXTINF")) {
-      const name = line.split(",").slice(1).join(",").trim() || "Unknown channel";
-      const attr = (key) => {
-        const match = line.match(new RegExp(`${key}="([^"]*)"`, "i"));
-        return match ? match[1] : "";
-      };
-      pending = {
-        name: attr("tvg-name") || name,
-        logo: attr("tvg-logo"),
-        country: attr("tvg-country") || attr("tvg-country-code") || "International",
-        group: attr("group-title") || "General",
-        language: attr("tvg-language") || "",
-        title: name
-      };
-    } else if (!line.startsWith("#") && pending) {
-      if (/^https?:\/\//i.test(line)) {
-        channels.push({ ...pending, url: line });
-      }
-      pending = null;
-    }
-  }
-  return uniqueBy(channels, (channel) => channel.url).slice(0, CONFIG.tvLimit);
-}
-async function loadTV() {
-  setMessage("tvMessage", "Loading public TV playlist…");
-  $("tvList").innerHTML = '<div class="empty-state">Loading channels…</div>';
-  try {
-    const response = await timeoutFetch(CONFIG.tvPlaylist, {}, 20000);
-    if (!response.ok) throw new Error(`Playlist returned ${response.status}`);
-    const text = await response.text();
-    state.tv = parseM3U(text);
-    if (!state.tv.length) throw new Error("No public channels found in playlist");
-    populateTVCountries();
-    renderTV();
-    $("tvCount").textContent = `${state.tv.length} public channels`;
-    setMessage("tvMessage", "Select a public channel. If playback fails, the broadcaster may have changed or restricted its stream.");
-  } catch (error) {
-    state.tv = [];
-    $("tvList").innerHTML = `<div class="empty-state">Could not load the public playlist. ${safeText(error.message)}. Check the playlist source or try again.</div>`;
-    $("tvCount").textContent = "Playlist unavailable";
-    setMessage("tvMessage", "No TV playlist is available right now. This does not mean the channel list is empty permanently.");
-  }
-}
-function populateTVCountries() {
-  const select = $("tvCountry");
-  const countries = [...new Set(state.tv.map((item) => item.country).filter(Boolean))].sort();
-  select.innerHTML = '<option value="all">All countries</option>' + countries.map((country) => `<option value="${safeText(country)}">${safeText(country)}</option>`).join("");
-}
-function renderTV() {
-  const query = $("tvSearch").value.trim().toLowerCase();
-  const country = $("tvCountry").value;
-  const items = state.tv.filter((channel) => {
-    const matchesText = `${channel.name} ${channel.country} ${channel.group} ${channel.language}`.toLowerCase().includes(query);
-    return matchesText && (country === "all" || channel.country === country);
-  }).slice(0, 150);
-  $("tvList").innerHTML = items.length ? items.map((channel) => {
-    const index = state.tv.indexOf(channel);
-    return `<button class="channel-item ${state.selectedTV?.url === channel.url ? "selected" : ""}" data-tv-index="${index}">
-      <span class="channel-logo">${channel.logo ? `<img src="${safeText(channel.logo)}" alt="" style="width:100%;height:100%;object-fit:contain" onerror="this.remove()">` : "TV"}</span>
-      <span><strong>${safeText(channel.name)}</strong><small>${safeText(channel.country)} · ${safeText(channel.group)}</small></span>
-    </button>`;
-  }).join("") : '<div class="empty-state">No channels match this search.</div>';
-}
-async function playTV(channel) {
-  if (!channel) return;
-  state.selectedTV = channel;
-  $("tvNowPlaying").textContent = channel.name;
-  $("tvPlaceholder").classList.add("hidden");
-  $("tvExternal").classList.remove("hidden");
-  $("tvExternal").href = channel.url;
-  $("tvEmbed").classList.add("hidden");
-  $("tvVideo").classList.remove("hidden");
-  $("tvVideo").pause();
-  $("tvVideo").removeAttribute("src");
-  $("tvVideo").load();
-  if (state.hls) {
-    state.hls.destroy();
-    state.hls = null;
-  }
-  renderTV();
-  setMessage("tvMessage", "Connecting to stream…");
-  const video = $("tvVideo");
-  try {
-    if (/\.m3u8($|\?)/i.test(channel.url) && window.Hls && Hls.isSupported()) {
-      state.hls = new Hls({ enableWorker: true, lowLatencyMode: true });
-      state.hls.loadSource(channel.url);
-      state.hls.attachMedia(video);
-      state.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        video.play().catch(() => setMessage("tvMessage", "Press Play to start the stream."));
-        setMessage("tvMessage", "Stream loaded. Press Play if it does not start automatically.");
-      });
-      state.hls.on(Hls.Events.ERROR, (_event, data) => {
-        if (data.fatal) setMessage("tvMessage", "This stream could not play in the browser. Try another channel or open the broadcaster source.");
-      });
-    } else {
-      video.src = channel.url;
-      await video.play().catch(() => {});
-      setMessage("tvMessage", "If playback does not start, this format may not be supported by your browser.");
-    }
-  } catch (error) {
-    setMessage("tvMessage", "Playback failed. The source may be offline, restricted or unsupported.");
-  }
-}
-function setupTVControls() {
-  $("tvSearch").addEventListener("input", renderTV);
-  $("tvCountry").addEventListener("change", renderTV);
-  $("tvList").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-tv-index]");
-    if (button) playTV(state.tv[Number(button.dataset.tvIndex)]);
-  });
-  $("refreshTV").addEventListener("click", loadTV);
-}
+    <section class="ticker" aria-label="News ticker">
+      <div class="ticker-label"><span class="live-dot"></span> TOP STORIES</div>
+      <div class="ticker-track" id="tickerTrack"><span>Welcome to ITT-TV. Latest headlines will appear here when available.</span></div>
+    </section>
 
-/* ---------------------------------------------------------
-   RADIO — Radio Browser API
-   --------------------------------------------------------- */
-async function loadRadio() {
-  setMessage("radioMessage", "Searching the public radio directory…");
-  $("radioList").innerHTML = '<div class="empty-state">Finding stations…</div>';
-  try {
-    const url = `${CONFIG.radioApi}/stations/search?limit=${CONFIG.radioLimit}&hidebroken=true&order=clickcount&reverse=true`;
-    const response = await timeoutFetch(url, { headers: { "User-Agent": "ITT-TV/1.0" } });
-    if (!response.ok) throw new Error(`Radio directory returned ${response.status}`);
-    const data = await response.json();
-    state.radio = uniqueBy(data.filter((station) => station.url_resolved), (station) => station.stationuuid);
-    populateRadioCountries();
-    renderRadio();
-    $("radioCount").textContent = `${state.radio.length} stations found`;
-    setMessage("radioMessage", "Choose a station to listen. Some streams may be unavailable in certain locations.");
-  } catch (error) {
-    state.radio = [];
-    $("radioList").innerHTML = `<div class="empty-state">Radio directory is temporarily unavailable. ${safeText(error.message)}. Try again later.</div>`;
-    $("radioCount").textContent = "Directory unavailable";
-  }
-}
-function populateRadioCountries() {
-  const select = $("radioCountry");
-  const current = select.value;
-  const countries = [...new Set(state.radio.map((station) => station.country).filter(Boolean))].sort();
-  select.innerHTML = '<option value="all">All countries</option>' + countries.map((country) => `<option value="${safeText(country)}">${safeText(country)}</option>`).join("");
-  if (countries.includes(current)) select.value = current;
-  else if (countries.includes("Rwanda")) select.value = "Rwanda";
-}
-function getFilteredRadio() {
-  const query = $("radioSearch").value.trim().toLowerCase();
-  const country = $("radioCountry").value;
-  return state.radio.filter((station) => {
-    const content = `${station.name} ${station.country} ${station.language} ${station.tags}`.toLowerCase();
-    return content.includes(query) && (country === "all" || station.country === country);
-  }).slice(0, 80);
-}
-function renderRadio() {
-  const items = getFilteredRadio();
-  $("radioList").innerHTML = items.length ? items.map((station) => `
-    <button class="radio-card ${state.selectedRadio?.stationuuid === station.stationuuid ? "selected" : ""}" data-radio-id="${safeText(station.stationuuid)}">
-      <span class="radio-icon">♫</span>
-      <span><strong>${safeText(station.name)}</strong><small>${safeText(station.country || "International")} · ${safeText(station.language || "Radio")}</small></span>
-    </button>`).join("") : '<div class="empty-state">No stations match your search. Try another country or name.</div>';
-}
-async function playRadio(station) {
-  if (!station) return;
-  state.selectedRadio = station;
-  const player = $("radioPlayer");
-  player.pause();
-  player.src = station.url_resolved;
-  $("radioNowPlaying").textContent = station.name;
-  $("radioMeta").textContent = [station.country, station.language, station.tags].filter(Boolean).join(" · ");
-  renderRadio();
-  setMessage("radioMessage", "Connecting to radio stream…");
-  try {
-    await player.play();
-    setMessage("radioMessage", "Now playing. Keep this tab open while listening.");
-  } catch (error) {
-    setMessage("radioMessage", "The station did not start. Press Play or choose another station; the stream may be offline or restricted.");
-  }
-}
-function setupRadioControls() {
-  $("radioSearch").addEventListener("input", renderRadio);
-  $("radioCountry").addEventListener("change", renderRadio);
-  $("radioList").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-radio-id]");
-    if (!button) return;
-    const station = state.radio.find((item) => item.stationuuid === button.dataset.radioId);
-    playRadio(station);
-  });
-  $("refreshRadios").addEventListener("click", loadRadio);
-  $("radioPlayer").addEventListener("error", () => setMessage("radioMessage", "Audio stream error. Try a different station."));
-}
-
-/* ---------------------------------------------------------
-   MOVIES — publicly available sample films
-   --------------------------------------------------------- */
-const MOVIES = [
-  {
-    title: "Big Buck Bunny",
-    year: "2008",
-    kind: "Open movie",
-    icon: "🐰",
-    description: "A short animated film released as an open project.",
-    url: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
-  },
-  {
-    title: "Sintel",
-    year: "2010",
-    kind: "Open movie",
-    icon: "🐉",
-    description: "An animated fantasy short from the Blender open-movie project.",
-    url: "https://media.w3.org/2010/05/sintel/trailer.mp4"
-  },
-  {
-    title: "Tears of Steel",
-    year: "2012",
-    kind: "Open movie",
-    icon: "🎬",
-    description: "A science-fiction short made by the Blender Foundation.",
-    url: "https://media.w3.org/2010/05/bunny/trailer.mp4"
-  },
-  {
-    title: "For Bigger Escapes",
-    year: "Sample",
-    kind: "Demo video",
-    icon: "🌍",
-    description: "A short sample video for testing the website player.",
-    url: "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"
-  }
-];
-function renderMovies() {
-  $("movieGrid").innerHTML = MOVIES.map((movie, index) => `
-    <article class="movie-card" data-movie-index="${index}" tabindex="0" role="button" aria-label="Play ${safeText(movie.title)}">
-      <div class="movie-poster">${movie.icon}</div>
-      <div class="movie-card-body"><h3>${safeText(movie.title)}</h3><p>${safeText(movie.year)} · ${safeText(movie.kind)}</p><button type="button">▶ Play sample</button></div>
-    </article>`).join("");
-}
-function playMovie(movie) {
-  if (!movie) return;
-  state.selectedMovie = movie;
-  const player = $("moviePlayer");
-  player.pause();
-  player.src = movie.url;
-  player.load();
-  $("moviePlaceholder").classList.add("hidden");
-  $("movieNowPlaying").textContent = movie.title;
-  setMessage("movieMessage", "Loading the selected sample film…");
-  player.play().then(() => {
-    setMessage("movieMessage", "Playing. Use the video controls to pause or change volume.");
-  }).catch(() => {
-    setMessage("movieMessage", "Press Play. If this sample is unavailable, choose another title.");
-  });
-}
-function setupMovieControls() {
-  $("movieGrid").addEventListener("click", (event) => {
-    const card = event.target.closest("[data-movie-index]");
-    if (card) playMovie(MOVIES[Number(card.dataset.movieIndex)]);
-  });
-  $("movieGrid").addEventListener("keydown", (event) => {
-    if ((event.key === "Enter" || event.key === " ") && event.target.matches("[data-movie-index]")) {
-      event.preventDefault();
-      playMovie(MOVIES[Number(event.target.dataset.movieIndex)]);
-    }
-  });
-  $("moviePlayer").addEventListener("error", () => setMessage("movieMessage", "This sample video is currently unavailable. Try another title."));
-}
-
-/* ---------------------------------------------------------
-   Boot
-   --------------------------------------------------------- */
-function initializeApp() {
-  setupNavigation();
-  setupNewsControls();
-  setupTVControls();
-  setupRadioControls();
-  setupMovieControls();
-  renderMovies();
-  loadNews();
-  loadTV();
-  loadRadio();
-}
-document.addEventListener("DOMContentLoaded", initializeApp);
-
-/* ==========================================
-   ITT-TV: VERIFIED RWANDA LIVE CHANNELS
-   Add this code at the bottom of app.js
-========================================== */
-
-(() => {
-  const tvStations = [
-    {
-      name: "ISIBO TV",
-      url: "https://isibomedia.com/listen/tv",
-      description: "ISIBO TV Live"
-    },
-    {
-      name: "BTN TV",
-      url: "https://v2.btnrwanda.com/page/live/",
-      description: "BTN Live"
-    },
-    {
-      name: "Rwanda TV (RTV)",
-      url: "https://www.rba.co.rw/tv",
-      description: "RTV - RBA"
-    },
-    {
-      name: "B+ TV",
-      url: "https://v2.btnrwanda.com/page/live/",
-      description: "B+ Live"
-    }
-  ];
-
-  const radioStations = [
-    {
-      name: "ISIBO Radio",
-      url: "https://isibomedia.com/listen/radio"
-    },
-    {
-      name: "Radio Rwanda",
-      url: "https://www.rba.co.rw/radio/1/Radio-Rwanda"
-    }
-  ];
-
-  function createLiveSection() {
-    if (document.getElementById("rw-live-section")) return;
-
-    const style = document.createElement("style");
-
-    style.textContent = `
-      #rw-live-section {
-        background: #08111f;
-        color: #f1f6ff;
-        padding: 24px;
-        margin: 20px auto;
-        max-width: 1250px;
-        border-radius: 16px;
-        font-family: Arial, sans-serif;
-      }
-
-      #rw-live-section h2 {
-        color: #42d6c5;
-        margin: 20px 0 14px;
-      }
-
-      .rw-live-layout {
-        display: grid;
-        grid-template-columns: 250px 1fr;
-        gap: 18px;
-      }
-
-      .rw-channel-list {
-        display: flex;
-        flex-direction: column;
-        gap: 9px;
-      }
-
-      .rw-channel-button {
-        background: #14243a;
-        color: white;
-        border: 1px solid #29415d;
-        border-radius: 9px;
-        padding: 14px;
-        cursor: pointer;
-        text-align: left;
-        font-size: 15px;
-      }
-
-      .rw-channel-button:hover,
-      .rw-channel-button.active {
-        background: #087e79;
-        border-color: #42d6c5;
-      }
-
-      .rw-player-area {
-        background: #000;
-        border-radius: 12px;
-        overflow: hidden;
-        min-height: 300px;
-      }
-
-      .rw-player-area iframe {
-        width: 100%;
-        height: 430px;
-        border: 0;
-        display: block;
-        background: #000;
-      }
-
-      .rw-player-message {
-        padding: 15px;
-        background: #14243a;
-        color: #cbd5e1;
-        line-height: 1.6;
-      }
-
-      .rw-open-link {
-        display: inline-block;
-        margin-top: 10px;
-        color: #42d6c5;
-        font-weight: bold;
-      }
-
-      .rw-live-label {
-        color: #ff5252;
-        font-weight: bold;
-        margin-left: 8px;
-      }
-
-      .rw-radio-list {
-        display: grid;
-        grid-template-columns:
-          repeat(auto-fit, minmax(180px, 1fr));
-        gap: 12px;
-      }
-
-      .rw-radio-card {
-        background: #14243a;
-        padding: 17px;
-        border-radius: 10px;
-        border: 1px solid #29415d;
-      }
-
-      .rw-radio-card button {
-        margin-top: 10px;
-        background: #087e79;
-        color: white;
-        border: 0;
-        padding: 10px 15px;
-        border-radius: 7px;
-        cursor: pointer;
-      }
-
-      @media(max-width: 700px) {
-        #rw-live-section {
-          padding: 14px;
-        }
-
-        .rw-live-layout {
-          grid-template-columns: 1fr;
-        }
-
-        .rw-channel-list {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-        }
-
-        .rw-player-area iframe {
-          height: 260px;
-        }
-      }
-    `;
-
-    document.head.appendChild(style);
-
-    const section = document.createElement("section");
-    section.id = "rw-live-section";
-
-    section.innerHTML = `
-      <h2>🇷🇼 Rwanda TV Channels</h2>
-
-      <div class="rw-live-layout">
-        <div class="rw-channel-list" id="rw-tv-list"></div>
-
-        <div>
-          <div class="rw-player-area" id="rw-tv-player">
-            <div class="rw-player-message">
-              Hitamo televiziyo kugira ngo urebe niba Live player yayo
-              ifunguka hano.
-            </div>
+    <section class="section-shell section-block" id="news">
+      <div class="section-heading">
+        <div><span class="eyebrow">THE LATEST</span><h2>News <span>&amp; headlines</span></h2><p>Updates from Rwanda, Africa and across the world.</p></div>
+        <button class="button button-outline" id="refreshNews">↻ Refresh news</button>
+      </div>
+      <div class="news-toolbar">
+        <div class="filter-pills" id="newsFilters">
+          <button class="filter-pill selected" data-category="all">All news</button>
+          <button class="filter-pill" data-category="Rwanda">Rwanda</button>
+          <button class="filter-pill" data-category="Africa">Africa</button>
+          <button class="filter-pill" data-category="World">World</button>
+          <button class="filter-pill" data-category="Business">Business</button>
+          <button class="filter-pill" data-category="Technology">Technology</button>
+          <button class="filter-pill" data-category="Sports">Sports</button>
+        </div>
+        <label class="search-field"><span>⌕</span><input id="newsSearch" type="search" placeholder="Search headlines..."></label>
+      </div>
+      <div class="status-line" id="newsStatus" role="status">Loading headlines…</div>
+      <div class="news-layout">
+        <div class="news-grid" id="newsGrid" aria-live="polite"></div>
+        <aside class="news-sidebar">
+          <div class="sidebar-card">
+            <span class="eyebrow">NEWSROOM</span><h3>Stay informed</h3>
+            <p>Browse trusted publishers and open the original story on their websites.</p>
+            <a href="https://news.google.com/" target="_blank" rel="noopener noreferrer" class="text-link">Explore Google News ↗</a>
           </div>
+          <div class="sidebar-card sidebar-dark">
+            <span class="eyebrow">AROUND THE WORLD</span><h3>One platform.<br>Many perspectives.</h3>
+            <p>ITT-TV links to reporting from publishers. Headlines and availability depend on their feeds.</p>
+          </div>
+        </aside>
+      </div>
+      <div class="center-actions"><button class="button button-outline" id="loadMoreNews">Load more headlines</button></div>
+    </section>
+
+    <section class="sports-band" id="sports">
+      <div class="section-shell section-block">
+        <div class="section-heading">
+          <div><span class="eyebrow">MATCHES · TEAMS · STORIES</span><h2>Sports <span>desk</span></h2><p>Sports headlines from Rwanda and around the world.</p></div>
+          <a class="button button-outline" href="https://www.bbc.com/sport" target="_blank" rel="noopener noreferrer">More sports ↗</a>
+        </div>
+        <div class="sports-grid" id="sportsGrid">
+          <article class="sport-feature"><div class="sport-feature-icon">🏆</div><span class="eyebrow">SPORTS UPDATE</span><h3>Follow the stories behind the game.</h3><p>Fresh sports headlines will appear here when the news feed is available.</p><a href="#news" class="text-link">View sports headlines ↗</a></article>
+          <div class="sports-list" id="sportsList"><div class="empty-state">Loading sports headlines…</div></div>
         </div>
       </div>
+    </section>
 
-      <h2>🇷🇼 Rwanda Radio Stations</h2>
-
-      <div class="rw-radio-list" id="rw-radio-list"></div>
-
-      <div class="rw-player-area" id="rw-radio-player"
-           style="margin-top:15px">
-        <div class="rw-player-message">
-          Hitamo radiyo kugira ngo wumve ibiganiro byayo.
+    <section class="section-shell section-block" id="tv">
+      <div class="section-heading">
+        <div><span class="eyebrow">WATCH PUBLIC BROADCASTS</span><h2>Live <span>television</span></h2><p>Choose a publicly available stream. Some broadcasters restrict embedding or viewing by location.</p></div>
+        <span class="section-count" id="tvCount">0 channels loaded</span>
+      </div>
+      <div class="media-layout">
+        <div class="player-column">
+          <div class="video-frame" id="tvFrame">
+            <video id="tvVideo" controls playsinline preload="none"></video>
+            <iframe id="tvEmbed" title="Television player" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen class="hidden"></iframe>
+            <div class="player-placeholder" id="tvPlaceholder"><div class="play-emblem">▶</div><h3>Select a TV channel</h3><p>Available public streams play here.</p></div>
+          </div>
+          <div class="now-playing"><div><span class="eyebrow">NOW PLAYING</span><h3 id="tvNowPlaying">No channel selected</h3></div><a class="text-link hidden" id="tvExternal" href="#" target="_blank" rel="noopener noreferrer">Open broadcaster ↗</a></div>
+          <p class="player-message" id="tvMessage" role="status">Choose a channel from the list. Streams may be unavailable or region-restricted.</p>
         </div>
+        <aside class="channel-panel">
+          <div class="panel-heading"><h3>Channel guide</h3><span class="live-pill"><i></i> PUBLIC</span></div>
+          <div class="channel-tools"><input id="tvSearch" type="search" placeholder="Find a channel..."><select id="tvCountry"><option value="all">All countries</option></select></div>
+          <div class="channel-list" id="tvList"><div class="empty-state">Loading channel list…</div></div>
+          <div class="panel-footer"><button class="button button-outline button-small" id="refreshTV">↻ Reload channels</button><a href="https://github.com/freecasthub/public-iptv" target="_blank" rel="noopener noreferrer">Playlist source ↗</a></div>
+        </aside>
       </div>
-    `;
+      <p class="fine-print">ITT-TV does not host or bypass paid television services. Streams are loaded from public third-party sources; availability and rights are determined by each broadcaster and source provider.</p>
+    </section>
 
-    const existingTV = document.getElementById("tv");
-
-    if (existingTV) {
-      existingTV.appendChild(section);
-    } else {
-      document.body.appendChild(section);
-    }
-
-    renderTV();
-    renderRadio();
-  }
-
-  function showOfficialPlayer(station, playerId, button) {
-    const player = document.getElementById(playerId);
-
-    if (!player) return;
-
-    player.innerHTML = `
-      <iframe
-        src="${station.url}"
-        title="${station.name}"
-        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-        allowfullscreen
-        loading="lazy"
-        referrerpolicy="strict-origin-when-cross-origin">
-      </iframe>
-
-      <div class="rw-player-message">
-        <strong>${station.name}</strong>
-        <span class="rw-live-label">LIVE</span>
-        <br>
-        Niba player itagaragara, fungura urubuga rwemewe:
-        <br>
-        <a class="rw-open-link"
-           href="${station.url}"
-           target="_blank"
-           rel="noopener noreferrer">
-           Fungura ${station.name} hanze
-        </a>
+    <section class="radio-section section-block" id="radio">
+      <div class="section-shell">
+        <div class="section-heading">
+          <div><span class="eyebrow">TUNE IN FROM ANYWHERE</span><h2>World <span>radio</span></h2><p>Discover public radio stations by country, name or language.</p></div>
+          <span class="section-count" id="radioCount">Finding stations…</span>
+        </div>
+        <div class="radio-player-card">
+          <div class="radio-art"><span>♫</span><small>ITT RADIO</small></div>
+          <div class="radio-current"><span class="eyebrow">NOW ON AIR</span><h3 id="radioNowPlaying">Choose a radio station</h3><p id="radioMeta">Radio Browser public directory</p><audio id="radioPlayer" controls preload="none"></audio><p id="radioMessage" class="player-message" role="status">Select a station below to start listening.</p></div>
+        </div>
+        <div class="radio-toolbar"><input id="radioSearch" type="search" placeholder="Search station, country or language..."><select id="radioCountry"><option value="all">All countries</option><option value="Rwanda">Rwanda</option></select><button class="button button-outline" id="refreshRadios">↻ Refresh stations</button></div>
+        <div class="radio-grid" id="radioList"><div class="empty-state">Loading radio stations…</div></div>
+        <p class="fine-print">Radio directory data is supplied by Radio Browser. A station may stop working, require a regional connection or change its stream address.</p>
       </div>
-    `;
+    </section>
 
-    document.querySelectorAll(".rw-channel-button")
-      .forEach(btn => btn.classList.remove("active"));
+    <section class="section-shell section-block" id="movies">
+      <div class="section-heading">
+        <div><span class="eyebrow">CINEMA CORNER</span><h2>Movies <span>&amp; films</span></h2><p>Explore free films and public-domain or openly licensed video examples.</p></div>
+        <span class="section-count">Free-to-watch samples</span>
+      </div>
+      <div class="movie-player-layout">
+        <div class="movie-player-wrap">
+          <video id="moviePlayer" controls playsinline preload="metadata"></video>
+          <div class="movie-placeholder" id="moviePlaceholder"><span>▶</span><h3>Your movie screen</h3><p>Select a title to play a supported film.</p></div>
+          <div class="now-playing"><div><span class="eyebrow">SELECTED FILM</span><h3 id="movieNowPlaying">No film selected</h3></div></div>
+          <p id="movieMessage" class="player-message">Only sample titles with public viewing sources are listed.</p>
+        </div>
+        <div class="movie-side-note"><span class="eyebrow">WATCH RESPONSIBLY</span><h3>Discover independent cinema.</h3><p>Film links are provided for public viewing. ITT-TV does not provide pirated or subscription-only movie copies.</p><a href="https://www.blender.org/about/projects/" target="_blank" rel="noopener noreferrer" class="text-link">Explore Blender open movies ↗</a></div>
+      </div>
+      <div class="movie-grid" id="movieGrid"></div>
+    </section>
 
-    if (button) button.classList.add("active");
-  }
+    <section class="about-section section-block" id="about">
+      <div class="section-shell about-inner">
+        <div><span class="eyebrow">ABOUT THE PLATFORM</span><h2>Media without <span>borders.</span></h2></div>
+        <p>ITT-TV brings news links, public television streams, worldwide radio discovery and free-to-watch film resources together in one responsive website. Content remains owned and operated by its original publishers and broadcasters.</p>
+      </div>
+    </section>
+  </main>
 
-  function renderTV() {
-    const list = document.getElementById("rw-tv-list");
-    if (!list) return;
+  <footer class="site-footer">
+    <div class="section-shell footer-inner">
+      <a class="brand footer-brand" href="#home"><span class="brand-mark">ITT</span><span class="brand-dash">-</span><span class="brand-tv">TV</span><small>WORLD MEDIA</small></a>
+      <p>© <span id="year"></span> ITT-TV. Independent media discovery platform.</p>
+      <a href="#home" class="text-link">Back to top ↑</a>
+    </div>
+    <p class="footer-disclaimer">External content, logos, streams and articles belong to their respective owners. ITT-TV does not guarantee third-party availability.</p>
+  </footer>
 
-    tvStations.forEach(station => {
-      const button = document.createElement("button");
-      button.className = "rw-channel-button";
-      button.textContent = "📺 " + station.name;
-
-      button.addEventListener("click", () => {
-        showOfficialPlayer(station, "rw-tv-player", button);
-      });
-
-      list.appendChild(button);
-    });
-  }
-
-  function renderRadio() {
-    const list = document.getElementById("rw-radio-list");
-    if (!list) return;
-
-    radioStations.forEach(station => {
-      const card = document.createElement("div");
-      card.className = "rw-radio-card";
-
-      card.innerHTML = `
-        <strong>📻 ${station.name}</strong>
-        <br>
-        <button type="button">Tega Radio</button>
-      `;
-
-      card.querySelector("button").addEventListener("click", () => {
-        showOfficialPlayer(station, "rw-radio-player");
-      });
-
-      list.appendChild(card);
-    });
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", createLiveSection);
-  } else {
-    createLiveSection();
-  }
-})();
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
