@@ -1,210 +1,1138 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#081525">
-  <meta name="description" content="ITT-TV — news, sports, public live TV, worldwide radio and free films.">
-  <title>ITT-TV | News, Live TV, Radio & Movies</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <div class="announcement" id="announcement">
-    <span class="live-dot"></span>
-    <span>ITT-TV · Your window to Rwanda and the world</span>
-    <button class="announcement-close" id="closeAnnouncement" aria-label="Close announcement">×</button>
-  </div>
 
-  <header class="site-header">
-    <a class="brand" href="#home" aria-label="ITT-TV home">
-      <span class="brand-mark">ITT</span><span class="brand-dash">-</span><span class="brand-tv">TV</span>
-      <small>WORLD MEDIA</small>
-    </a>
-    <button class="menu-toggle" id="menuToggle" aria-label="Open navigation" aria-expanded="false">☰</button>
-    <nav class="main-nav" id="mainNav">
-      <a class="nav-link active" href="#home">Home</a>
-      <a class="nav-link" href="#news">News</a>
-      <a class="nav-link" href="#sports">Sports</a>
-      <a class="nav-link" href="#tv">Live TV</a>
-      <a class="nav-link" href="#radio">Radio</a>
-      <a class="nav-link" href="#movies">Movies</a>
-      <a class="nav-link" href="#about">About</a>
-    </nav>
-    <div class="header-actions">
-      <button class="icon-button" id="globalSearchToggle" aria-label="Search">⌕</button>
-      <span class="header-live"><i></i> ON AIR</span>
-    </div>
-  </header>
+/* =========================================================
+   ITT-TV COMPLETE APP.JS
+   Compatible with the supplied index.html
+   Features: News, Sports, Live TV, Radio and Movies
+========================================================= */
 
-  <div class="global-search-wrap hidden" id="globalSearchWrap">
-    <label class="sr-only" for="globalSearch">Search ITT-TV</label>
-    <input id="globalSearch" type="search" placeholder="Search news, TV channels, radio stations...">
-    <button class="button button-primary" id="globalSearchButton">Search</button>
-  </div>
+"use strict";
 
-  <main>
-    <section class="hero section-shell" id="home">
-      <div class="hero-copy">
-        <span class="eyebrow"><span class="live-dot"></span> CONNECTED TO THE WORLD</span>
-        <h1>Stories that matter.<br><span>Streams that move you.</span></h1>
-        <p>Follow the latest headlines, explore public live television, listen to radio stations from around the world and discover free-to-watch films.</p>
-        <div class="hero-actions">
-          <a class="button button-primary" href="#news">Explore the news <span>↗</span></a>
-          <a class="button button-ghost" href="#tv">Watch live TV <span>▶</span></a>
-        </div>
-        <div class="hero-proof">
-          <span><b>01</b> Rwanda & Africa</span>
-          <span><b>02</b> Global coverage</span>
-          <span><b>03</b> Free public streams</span>
-        </div>
+/* ===================== CONFIGURATION ===================== */
+
+const CONFIG = {
+  iptvChannels: "https://iptv-org.github.io/api/channels.json",
+  iptvStreams: "https://iptv-org.github.io/api/streams.json",
+
+  radioServers: [
+    "https://de1.api.radio-browser.info",
+    "https://nl1.api.radio-browser.info",
+    "https://fr1.api.radio-browser.info"
+  ],
+
+  rssProxy: "https://api.rss2json.com/v1/api.json?rss_url=",
+
+  newsFeeds: [
+    {
+      name: "BBC News",
+      category: "World",
+      url: "https://feeds.bbci.co.uk/news/rss.xml"
+    },
+    {
+      name: "BBC Africa",
+      category: "Africa",
+      url: "https://feeds.bbci.co.uk/news/world/africa/rss.xml"
+    },
+    {
+      name: "BBC World",
+      category: "World",
+      url: "https://feeds.bbci.co.uk/news/world/rss.xml"
+    },
+    {
+      name: "BBC Technology",
+      category: "Technology",
+      url: "https://feeds.bbci.co.uk/news/technology/rss.xml"
+    },
+    {
+      name: "BBC Business",
+      category: "Business",
+      url: "https://feeds.bbci.co.uk/news/business/rss.xml"
+    },
+    {
+      name: "BBC Sport",
+      category: "Sports",
+      url: "https://feeds.bbci.co.uk/sport/rss.xml"
+    },
+    {
+      name: "Google News Rwanda",
+      category: "Rwanda",
+      url: "https://news.google.com/rss/search?q=Rwanda&hl=en&gl=RW&ceid=RW:en"
+    }
+  ],
+
+  movies: [
+    {
+      title: "Big Buck Bunny",
+      year: "2008",
+      category: "Animation",
+      description: "An open animated film from the Blender project.",
+      image: "https://peach.blender.org/wp-content/uploads/title_anouncement.jpg",
+      video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+    },
+    {
+      title: "Elephants Dream",
+      year: "2006",
+      category: "Animation",
+      description: "An open animated short film from the Blender project.",
+      image: "https://orange.blender.org/wp-content/themes/orange/images/media/gallery/s1_proog.jpg",
+      video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+    },
+    {
+      title: "Sintel",
+      year: "2010",
+      category: "Animation",
+      description: "An independently produced open animated film.",
+      image: "https://durian.blender.org/wp-content/uploads/2010/06/sintel_poster.jpg",
+      video: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+    }
+  ]
+};
+
+/* ===================== STATE ===================== */
+
+const state = {
+  news: [],
+  allNews: [],
+  newsCategory: "all",
+  newsLimit: 12,
+
+  tv: [],
+  filteredTV: [],
+  currentTV: null,
+  hls: null,
+
+  radios: [],
+  filteredRadios: [],
+  currentRadio: null,
+
+  movies: [],
+  currentMovie: null
+};
+
+/* ===================== HELPERS ===================== */
+
+const $ = id => document.getElementById(id);
+
+function escapeHTML(value = "") {
+  return String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[char]);
+}
+
+function safeURL(value) {
+  try {
+    const url = new URL(value);
+    return ["https:", "http:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function setText(id, value) {
+  const element = $(id);
+  if (element) element.textContent = value;
+}
+
+function setHTML(id, value) {
+  const element = $(id);
+  if (element) element.innerHTML = value;
+}
+
+function showStatus(id, message) {
+  setText(id, message);
+}
+
+async function fetchJSON(url, timeout = 18000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+
+  try {
+    const response = await fetch(url, {
+      signal: controller.signal,
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function formatDate(date) {
+  if (!date) return "Recently";
+
+  const parsed = new Date(date);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return "Recently";
+  }
+
+  return parsed.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric"
+  });
+}
+
+function uniqueBy(items, keyFunction) {
+  const seen = new Set();
+
+  return items.filter(item => {
+    const key = keyFunction(item);
+
+    if (!key || seen.has(key)) return false;
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function shuffle(items) {
+  return [...items].sort(() => Math.random() - 0.5);
+}
+
+/* ===================== NAVIGATION ===================== */
+
+function setupNavigation() {
+  setText("year", new Date().getFullYear());
+
+  $("closeAnnouncement")?.addEventListener("click", () => {
+    $("announcement")?.classList.add("hidden");
+  });
+
+  $("menuToggle")?.addEventListener("click", () => {
+    const nav = $("mainNav");
+    if (!nav) return;
+
+    nav.classList.toggle("open");
+
+    $("menuToggle").setAttribute(
+      "aria-expanded",
+      nav.classList.contains("open") ? "true" : "false"
+    );
+  });
+
+  document.querySelectorAll(".nav-link").forEach(link => {
+    link.addEventListener("click", () => {
+      $("mainNav")?.classList.remove("open");
+      $("menuToggle")?.setAttribute("aria-expanded", "false");
+
+      document.querySelectorAll(".nav-link").forEach(item => {
+        item.classList.remove("active");
+      });
+
+      link.classList.add("active");
+    });
+  });
+
+  $("globalSearchToggle")?.addEventListener("click", () => {
+    $("globalSearchWrap")?.classList.toggle("hidden");
+    $("globalSearch")?.focus();
+  });
+
+  $("globalSearchButton")?.addEventListener("click", globalSearch);
+
+  $("globalSearch")?.addEventListener("keydown", event => {
+    if (event.key === "Enter") globalSearch();
+  });
+}
+
+function globalSearch() {
+  const query = $("globalSearch")?.value.trim();
+
+  if (!query) return;
+
+  const encoded = encodeURIComponent(query);
+
+  const newsInput = $("newsSearch");
+  const tvInput = $("tvSearch");
+  const radioInput = $("radioSearch");
+
+  if (newsInput) newsInput.value = query;
+  if (tvInput) tvInput.value = query;
+  if (radioInput) radioInput.value = query;
+
+  renderNews();
+  filterTV();
+  filterRadios();
+
+  const firstMatch =
+    state.allNews.some(item => item.title.toLowerCase().includes(query.toLowerCase())) ||
+    state.tv.some(item => item.name.toLowerCase().includes(query.toLowerCase())) ||
+    state.radios.some(item => item.name.toLowerCase().includes(query.toLowerCase()));
+
+  if (!firstMatch) {
+    window.open(
+      `https://www.google.com/search?q=${encoded}`,
+      "_blank",
+      "noopener,noreferrer"
+    );
+  } else {
+    $("news")?.scrollIntoView({ behavior: "smooth" });
+  }
+}
+
+/* ===================== NEWS ===================== */
+
+async function loadNews() {
+  showStatus("newsStatus", "Loading latest headlines...");
+
+  const results = await Promise.allSettled(
+    CONFIG.newsFeeds.map(async feed => {
+      const feedURL = CONFIG.rssProxy + encodeURIComponent(feed.url);
+      const data = await fetchJSON(feedURL);
+
+      if (data.status !== "ok" || !Array.isArray(data.items)) {
+        throw new Error("Feed unavailable");
+      }
+
+      return data.items.map(item => ({
+        title: item.title || "Untitled story",
+        description: item.description || item.content || "",
+        link: safeURL(item.link),
+        image: safeURL(
+          item.thumbnail ||
+          item.enclosure?.link ||
+          ""
+        ),
+        date: item.pubDate || "",
+        source: feed.name,
+        category: feed.category
+      }));
+    })
+  );
+
+  const articles = results
+    .filter(result => result.status === "fulfilled")
+    .flatMap(result => result.value);
+
+  state.allNews = uniqueBy(
+    articles,
+    item => item.link || item.title
+  ).sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  if (!state.allNews.length) {
+    showStatus(
+      "newsStatus",
+      "News feeds could not load. Check your internet connection or try Refresh."
+    );
+
+    setHTML("newsGrid", `
+      <div class="empty-state">
+        <h3>News temporarily unavailable</h3>
+        <p>Try refreshing the news later.</p>
+        <a href="https://news.google.com/" target="_blank" rel="noopener noreferrer">
+          Open Google News
+        </a>
       </div>
-      <div class="hero-art" aria-label="News and media illustration">
-        <div class="art-orbit orbit-one"></div>
-        <div class="art-orbit orbit-two"></div>
-        <div class="art-card art-card-main">
-          <div class="art-card-top"><span class="live-pill"><i></i> LIVE</span><span>WORLD DESK</span></div>
-          <div class="art-globe">◎</div>
-          <div class="art-card-bottom"><strong>THE WORLD<br>IN ONE PLACE</strong><span>ITT-TV</span></div>
-        </div>
-        <div class="floating-tag tag-news">▤ <span>NEWS</span></div>
-        <div class="floating-tag tag-radio">♫ <span>RADIO</span></div>
-        <div class="floating-tag tag-play">▶ <span>LIVE TV</span></div>
-      </div>
-    </section>
+    `);
 
-    <section class="ticker" aria-label="News ticker">
-      <div class="ticker-label"><span class="live-dot"></span> TOP STORIES</div>
-      <div class="ticker-track" id="tickerTrack"><span>Welcome to ITT-TV. Latest headlines will appear here when available.</span></div>
-    </section>
+    return;
+  }
 
-    <section class="section-shell section-block" id="news">
-      <div class="section-heading">
-        <div><span class="eyebrow">THE LATEST</span><h2>News <span>&amp; headlines</span></h2><p>Updates from Rwanda, Africa and across the world.</p></div>
-        <button class="button button-outline" id="refreshNews">↻ Refresh news</button>
+  renderNews();
+
+  showStatus(
+    "newsStatus",
+    `${state.allNews.length} headlines loaded from available feeds.`
+  );
+
+  renderTicker();
+  renderSports();
+}
+
+function renderNews() {
+  const search = ($("newsSearch")?.value || "").toLowerCase();
+
+  let items = state.allNews.filter(item => {
+    const categoryMatch =
+      state.newsCategory === "all" ||
+      item.category.toLowerCase() === state.newsCategory.toLowerCase();
+
+    const searchMatch =
+      item.title.toLowerCase().includes(search) ||
+      item.description.toLowerCase().includes(search) ||
+      item.source.toLowerCase().includes(search);
+
+    return categoryMatch && searchMatch;
+  });
+
+  state.news = items;
+
+  const visible = items.slice(0, state.newsLimit);
+
+  if (!visible.length) {
+    setHTML("newsGrid", `
+      <div class="empty-state">
+        <h3>No headlines found</h3>
+        <p>Try another category or search term.</p>
       </div>
-      <div class="news-toolbar">
-        <div class="filter-pills" id="newsFilters">
-          <button class="filter-pill selected" data-category="all">All news</button>
-          <button class="filter-pill" data-category="Rwanda">Rwanda</button>
-          <button class="filter-pill" data-category="Africa">Africa</button>
-          <button class="filter-pill" data-category="World">World</button>
-          <button class="filter-pill" data-category="Business">Business</button>
-          <button class="filter-pill" data-category="Technology">Technology</button>
-          <button class="filter-pill" data-category="Sports">Sports</button>
-        </div>
-        <label class="search-field"><span>⌕</span><input id="newsSearch" type="search" placeholder="Search headlines..."></label>
-      </div>
-      <div class="status-line" id="newsStatus" role="status">Loading headlines…</div>
-      <div class="news-layout">
-        <div class="news-grid" id="newsGrid" aria-live="polite"></div>
-        <aside class="news-sidebar">
-          <div class="sidebar-card">
-            <span class="eyebrow">NEWSROOM</span><h3>Stay informed</h3>
-            <p>Browse trusted publishers and open the original story on their websites.</p>
-            <a href="https://news.google.com/" target="_blank" rel="noopener noreferrer" class="text-link">Explore Google News ↗</a>
+    `);
+    return;
+  }
+
+  setHTML("newsGrid", visible.map(item => {
+    const image = item.image
+      ? `<img src="${escapeHTML(item.image)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+      : `<div class="news-image-placeholder">ITT NEWS</div>`;
+
+    return `
+      <article class="news-card">
+        <a href="${escapeHTML(item.link || "https://news.google.com/")}"
+           target="_blank" rel="noopener noreferrer"
+           class="news-card-link">
+          ${image}
+          <div class="news-card-content">
+            <span class="eyebrow">${escapeHTML(item.category)}</span>
+            <h3>${escapeHTML(item.title)}</h3>
+            <p>${escapeHTML(
+              item.description.replace(/<[^>]*>/g, "").slice(0, 150)
+            )}</p>
+            <div class="news-card-meta">
+              <span>${escapeHTML(item.source)}</span>
+              <span>${escapeHTML(formatDate(item.date))}</span>
+            </div>
+            <span class="text-link">Read original story ↗</span>
           </div>
-          <div class="sidebar-card sidebar-dark">
-            <span class="eyebrow">AROUND THE WORLD</span><h3>One platform.<br>Many perspectives.</h3>
-            <p>ITT-TV links to reporting from publishers. Headlines and availability depend on their feeds.</p>
-          </div>
-        </aside>
-      </div>
-      <div class="center-actions"><button class="button button-outline" id="loadMoreNews">Load more headlines</button></div>
-    </section>
+        </a>
+      </article>
+    `;
+  }).join(""));
+}
 
-    <section class="sports-band" id="sports">
-      <div class="section-shell section-block">
-        <div class="section-heading">
-          <div><span class="eyebrow">MATCHES · TEAMS · STORIES</span><h2>Sports <span>desk</span></h2><p>Sports headlines from Rwanda and around the world.</p></div>
-          <a class="button button-outline" href="https://www.bbc.com/sport" target="_blank" rel="noopener noreferrer">More sports ↗</a>
+function renderTicker() {
+  const items = state.allNews.slice(0, 12);
+
+  if (!items.length) return;
+
+  setHTML("tickerTrack", items.map(item => `
+    <span>
+      ${escapeHTML(item.title)}
+      ·
+      <a href="${escapeHTML(item.link || "https://news.google.com/")}"
+         target="_blank" rel="noopener noreferrer">
+        ${escapeHTML(item.source)}
+      </a>
+    </span>
+  `).join(" "));
+}
+
+function setupNews() {
+  $("refreshNews")?.addEventListener("click", loadNews);
+
+  $("newsSearch")?.addEventListener("input", () => {
+    state.newsLimit = 12;
+    renderNews();
+  });
+
+  $("newsFilters")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-category]");
+    if (!button) return;
+
+    state.newsCategory = button.dataset.category;
+
+    document.querySelectorAll("#newsFilters [data-category]")
+      .forEach(item => item.classList.remove("selected"));
+
+    button.classList.add("selected");
+    state.newsLimit = 12;
+    renderNews();
+  });
+
+  $("loadMoreNews")?.addEventListener("click", () => {
+    state.newsLimit += 12;
+    renderNews();
+  });
+}
+
+/* ===================== SPORTS ===================== */
+
+function renderSports() {
+  const sports = state.allNews.filter(item =>
+    item.category === "Sports"
+  );
+
+  if (!sports.length) {
+    setHTML("sportsList", `
+      <div class="empty-state">
+        Sports headlines are not available right now.
+        <a href="https://www.bbc.com/sport"
+           target="_blank" rel="noopener noreferrer">
+          Visit BBC Sport
+        </a>
+      </div>
+    `);
+    return;
+  }
+
+  setHTML("sportsList", sports.slice(0, 10).map(item => `
+    <article class="sports-item">
+      <span class="eyebrow">${escapeHTML(item.source)}</span>
+      <h3>
+        <a href="${escapeHTML(item.link)}"
+           target="_blank" rel="noopener noreferrer">
+          ${escapeHTML(item.title)}
+        </a>
+      </h3>
+      <p>${escapeHTML(formatDate(item.date))}</p>
+    </article>
+  `).join(""));
+}
+
+/* ===================== LIVE TV ===================== */
+
+async function loadTV() {
+  showStatus("tvMessage", "Finding public television streams...");
+  setText("tvCount", "Loading channels...");
+
+  try {
+    const [channels, streams] = await Promise.all([
+      fetchJSON(CONFIG.iptvChannels, 30000),
+      fetchJSON(CONFIG.iptvStreams, 30000)
+    ]);
+
+    if (!Array.isArray(channels) || !Array.isArray(streams)) {
+      throw new Error("Invalid IPTV data");
+    }
+
+    const channelMap = new Map(
+      channels.map(channel => [channel.id, channel])
+    );
+
+    state.tv = uniqueBy(
+      streams
+        .filter(stream => {
+          const url = safeURL(stream.url);
+
+          if (!url || !stream.channel) return false;
+
+          const channel = channelMap.get(stream.channel);
+
+          if (!channel || channel.is_nsfw) return false;
+
+          const labels = stream.labels || [];
+
+          if (labels.includes("Geo-blocked")) return false;
+
+          return true;
+        })
+        .map(stream => {
+          const channel = channelMap.get(stream.channel);
+
+          return {
+            name: channel.name || stream.title || "Unknown channel",
+            country: channel.country || "Unknown",
+            countryName: channel.country || "Unknown",
+            code: channel.country || "",
+            category: (channel.categories || []).join(", "),
+            logo: safeURL(
+              channel.logo ||
+              ""
+            ),
+            url: safeURL(stream.url),
+            title: stream.title || channel.name || "",
+            quality: stream.quality || "",
+            website: safeURL(channel.website || ""),
+            labels: stream.labels || []
+          };
+        }),
+      item => `${item.name.toLowerCase()}|${item.url}`
+    );
+
+    state.tv.sort((a, b) => {
+      if (a.country === "RW" && b.country !== "RW") return -1;
+      if (b.country === "RW" && a.country !== "RW") return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    populateTVCountries();
+    filterTV();
+
+    setText(
+      "tvCount",
+      `${state.tv.length} public streams found`
+    );
+
+    showStatus(
+      "tvMessage",
+      "Choose a channel. Some streams may not play in every country or browser."
+    );
+
+  } catch (error) {
+    console.error("TV loading error:", error);
+
+    state.tv = [];
+
+    setHTML("tvList", `
+      <div class="empty-state">
+        <h3>Channels could not load</h3>
+        <p>Check your connection and reload the channel list.</p>
+        <a href="https://iptv-org.github.io/api/streams.json"
+           target="_blank" rel="noopener noreferrer">
+          View public stream data
+        </a>
+      </div>
+    `);
+
+    setText("tvCount", "0 channels loaded");
+    showStatus("tvMessage", "The public TV directory is temporarily unavailable.");
+  }
+}
+
+function populateTVCountries() {
+  const select = $("tvCountry");
+  if (!select) return;
+
+  const previous = select.value || "all";
+
+  const countries = [...new Set(
+    state.tv.map(channel => channel.country)
+  )].filter(Boolean).sort();
+
+  select.innerHTML = `
+    <option value="all">All countries</option>
+    ${countries.map(country => `
+      <option value="${escapeHTML(country)}">
+        ${escapeHTML(country)}
+      </option>
+    `).join("")}
+  `;
+
+  if (countries.includes(previous)) select.value = previous;
+}
+
+function filterTV() {
+  const search = ($("tvSearch")?.value || "").toLowerCase();
+  const country = $("tvCountry")?.value || "all";
+
+  state.filteredTV = state.tv.filter(channel => {
+    const matchesSearch =
+      channel.name.toLowerCase().includes(search) ||
+      channel.country.toLowerCase().includes(search) ||
+      channel.category.toLowerCase().includes(search);
+
+    const matchesCountry =
+      country === "all" || channel.country === country;
+
+    return matchesSearch && matchesCountry;
+  });
+
+  renderTV();
+}
+
+function renderTV() {
+  if (!state.filteredTV.length) {
+    setHTML("tvList", `
+      <div class="empty-state">
+        No matching public streams were found.
+      </div>
+    `);
+    return;
+  }
+
+  setHTML("tvList", state.filteredTV.slice(0, 250).map((channel, index) => `
+    <button class="channel-item"
+            type="button"
+            data-tv-index="${index}">
+      <span class="channel-number">${index + 1}</span>
+      <span class="channel-info">
+        <strong>${escapeHTML(channel.name)}</strong>
+        <small>${escapeHTML(channel.country)}</small>
+      </span>
+      <span class="channel-live">LIVE</span>
+    </button>
+  `).join(""));
+
+  $("tvList")?.querySelectorAll("[data-tv-index]").forEach(button => {
+    button.addEventListener("click", () => {
+      const channel = state.filteredTV[
+        Number(button.dataset.tvIndex)
+      ];
+
+      if (channel) playTV(channel);
+    });
+  });
+}
+
+function stopTV() {
+  if (state.hls) {
+    state.hls.destroy();
+    state.hls = null;
+  }
+
+  const video = $("tvVideo");
+
+  if (video) {
+    video.pause();
+    video.removeAttribute("src");
+    video.load();
+    video.classList.remove("hidden");
+  }
+
+  $("tvEmbed")?.classList.add("hidden");
+}
+
+function playTV(channel) {
+  const video = $("tvVideo");
+  const external = $("tvExternal");
+
+  if (!video) return;
+
+  const url = safeURL(channel.url);
+  if (!url) return;
+
+  stopTV();
+
+  state.currentTV = channel;
+
+  setText("tvNowPlaying", channel.name);
+  showStatus(
+    "tvMessage",
+    "Connecting to public stream..."
+  );
+
+  if (external && channel.website) {
+    external.href = channel.website;
+    external.classList.remove("hidden");
+  } else {
+    external?.classList.add("hidden");
+  }
+
+  $("tvPlaceholder")?.classList.add("hidden");
+
+  video.classList.remove("hidden");
+
+  const isHLS = /\.m3u8($|\?)/i.test(url);
+
+  if (isHLS && window.Hls && window.Hls.isSupported()) {
+    state.hls = new window.Hls({
+      enableWorker: true,
+      lowLatencyMode: false
+    });
+
+    state.hls.loadSource(url);
+    state.hls.attachMedia(video);
+
+    state.hls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+      video.play().catch(() => {
+        showStatus("tvMessage", "Press Play to start the stream.");
+      });
+    });
+
+    state.hls.on(window.Hls.Events.ERROR, (event, data) => {
+      if (data.fatal) {
+        showStatus(
+          "tvMessage",
+          "This stream could not play. Try another channel or open the broadcaster website."
+        );
+      }
+    });
+
+  } else {
+    video.src = url;
+
+    video.play().catch(() => {
+      showStatus(
+        "tvMessage",
+        "Press Play. If playback fails, this stream may not support browser playback."
+      );
+    });
+  }
+
+  video.onerror = () => {
+    showStatus(
+      "tvMessage",
+      "Stream unavailable. Try another channel."
+    );
+  };
+
+  document.querySelectorAll(".channel-item").forEach(button => {
+    button.classList.remove("active");
+  });
+
+  const active = [...document.querySelectorAll(".channel-item")]
+    .find(button => {
+      const item = state.filteredTV[Number(button.dataset.tvIndex)];
+      return item === channel;
+    });
+
+  active?.classList.add("active");
+}
+
+function setupTV() {
+  $("tvSearch")?.addEventListener("input", filterTV);
+  $("tvCountry")?.addEventListener("change", filterTV);
+  $("refreshTV")?.addEventListener("click", loadTV);
+}
+
+/* ===================== RADIO ===================== */
+
+async function fetchRadioFromServer(server, path) {
+  return fetchJSON(`${server}${path}`, 18000);
+}
+
+async function loadRadios() {
+  showStatus("radioMessage", "Searching public radio stations...");
+  setText("radioCount", "Loading stations...");
+
+  const requests = CONFIG.radioServers.map(async server => {
+    const [rwanda, world] = await Promise.all([
+      fetchRadioFromServer(
+        server,
+        "/json/stations/search?countrycode=RW&hidebroken=true&order=clickcount&reverse=true&limit=100"
+      ),
+      fetchRadioFromServer(
+        server,
+        "/json/stations/topclick?hidebroken=true&limit=150"
+      )
+    ]);
+
+    return [...rwanda, ...world];
+  });
+
+  try {
+    let stations = [];
+
+    for (const request of requests) {
+      try {
+        stations = await request;
+        if (stations.length) break;
+      } catch (error) {
+        console.warn("Radio server unavailable:", error);
+      }
+    }
+
+    state.radios = uniqueBy(
+      stations
+        .filter(station => {
+          const url = safeURL(
+            station.url_resolved || station.url
+          );
+
+          return (
+            url &&
+            station.lastcheckok === 1 &&
+            url.startsWith("https://")
+          );
+        })
+        .map(station => ({
+          name: station.name || "Unknown station",
+          country: station.country || "Unknown",
+          countrycode: station.countrycode || "",
+          language: station.language || "",
+          tags: station.tags || "",
+          url: safeURL(station.url_resolved || station.url),
+          homepage: safeURL(station.homepage || ""),
+          logo: safeURL(station.favicon || ""),
+          codec: station.codec || "",
+          bitrate: station.bitrate || "",
+          uuid: station.stationuuid
+        })),
+      station => station.uuid || `${station.name}|${station.url}`
+    );
+
+    state.radios.sort((a, b) => {
+      if (a.countrycode === "RW" && b.countrycode !== "RW") return -1;
+      if (b.countrycode === "RW" && a.countrycode !== "RW") return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    populateRadioCountries();
+    filterRadios();
+
+    setText(
+      "radioCount",
+      `${state.radios.length} working-directory stations`
+    );
+
+    showStatus(
+      "radioMessage",
+      "Select a station to listen. Only stations marked online with HTTPS streams are listed."
+    );
+
+  } catch (error) {
+    console.error("Radio loading error:", error);
+
+    state.radios = [];
+
+    setHTML("radioList", `
+      <div class="empty-state">
+        <h3>Radio stations unavailable</h3>
+        <p>The radio directory could not be reached. Try again later.</p>
+        <a href="https://www.radio-browser.info/"
+           target="_blank" rel="noopener noreferrer">
+          Visit Radio Browser
+        </a>
+      </div>
+    `);
+
+    setText("radioCount", "0 stations loaded");
+    showStatus("radioMessage", "Radio directory temporarily unavailable.");
+  }
+}
+
+function populateRadioCountries() {
+  const select = $("radioCountry");
+  if (!select) return;
+
+  const previous = select.value || "all";
+
+  const countries = [...new Set(
+    state.radios.map(station => station.country)
+  )].filter(Boolean).sort();
+
+  select.innerHTML = `
+    <option value="all">All countries</option>
+    ${countries.map(country => `
+      <option value="${escapeHTML(country)}">
+        ${escapeHTML(country)}
+      </option>
+    `).join("")}
+  `;
+
+  if (countries.includes(previous)) select.value = previous;
+}
+
+function filterRadios() {
+  const search = ($("radioSearch")?.value || "").toLowerCase();
+  const country = $("radioCountry")?.value || "all";
+
+  state.filteredRadios = state.radios.filter(station => {
+    const matchesSearch =
+      station.name.toLowerCase().includes(search) ||
+      station.country.toLowerCase().includes(search) ||
+      station.language.toLowerCase().includes(search) ||
+      station.tags.toLowerCase().includes(search);
+
+    const matchesCountry =
+      country === "all" || station.country === country;
+
+    return matchesSearch && matchesCountry;
+  });
+
+  renderRadios();
+}
+
+function renderRadios() {
+  if (!state.filteredRadios.length) {
+    setHTML("radioList", `
+      <div class="empty-state">
+        No matching stations were found.
+      </div>
+    `);
+    return;
+  }
+
+  setHTML("radioList", state.filteredRadios.slice(0, 200).map((station, index) => `
+    <button class="radio-card"
+            type="button"
+            data-radio-index="${index}">
+      <span class="radio-card-art">
+        ${station.logo
+          ? `<img src="${escapeHTML(station.logo)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+          : "♫"}
+      </span>
+      <span class="radio-card-info">
+        <strong>${escapeHTML(station.name)}</strong>
+        <small>${escapeHTML(station.country)}</small>
+        <small>${escapeHTML(station.language || "Language not listed")}</small>
+      </span>
+      <span class="radio-card-play">▶</span>
+    </button>
+  `).join(""));
+
+  $("radioList")?.querySelectorAll("[data-radio-index]").forEach(button => {
+    button.addEventListener("click", () => {
+      const station = state.filteredRadios[
+        Number(button.dataset.radioIndex)
+      ];
+
+      if (station) playRadio(station);
+    });
+  });
+}
+
+async function playRadio(station) {
+  const player = $("radioPlayer");
+
+  if (!player) return;
+
+  state.currentRadio = station;
+
+  player.pause();
+  player.src = station.url;
+  player.load();
+
+  setText("radioNowPlaying", station.name);
+  setText(
+    "radioMeta",
+    `${station.country} · ${station.language || "Language not listed"}`
+  );
+
+  showStatus("radioMessage", "Connecting to radio station...");
+
+  try {
+    await player.play();
+
+    showStatus(
+      "radioMessage",
+      "Radio is playing."
+    );
+
+    if (station.uuid) {
+      const server = CONFIG.radioServers[0];
+
+      fetch(
+        `${server}/json/url/${encodeURIComponent(station.uuid)}`
+      ).catch(() => {});
+    }
+
+  } catch (error) {
+    showStatus(
+      "radioMessage",
+      "Playback failed. This station may have changed its stream address."
+    );
+  }
+
+  player.onerror = () => {
+    showStatus(
+      "radioMessage",
+      "Radio stream unavailable. Try another station."
+    );
+  };
+}
+
+function setupRadio() {
+  $("radioSearch")?.addEventListener("input", filterRadios);
+  $("radioCountry")?.addEventListener("change", filterRadios);
+  $("refreshRadios")?.addEventListener("click", loadRadios);
+}
+
+/* ===================== MOVIES ===================== */
+
+function loadMovies() {
+  state.movies = CONFIG.movies;
+  renderMovies();
+}
+
+function renderMovies() {
+  setHTML("movieGrid", state.movies.map((movie, index) => `
+    <article class="movie-card">
+      <button class="movie-card-button"
+              type="button"
+              data-movie-index="${index}">
+        <div class="movie-poster">
+          <img src="${escapeHTML(movie.image)}"
+               alt="${escapeHTML(movie.title)}"
+               loading="lazy"
+               onerror="this.style.display='none'">
+          <span class="movie-play">▶</span>
         </div>
-        <div class="sports-grid" id="sportsGrid">
-          <article class="sport-feature"><div class="sport-feature-icon">🏆</div><span class="eyebrow">SPORTS UPDATE</span><h3>Follow the stories behind the game.</h3><p>Fresh sports headlines will appear here when the news feed is available.</p><a href="#news" class="text-link">View sports headlines ↗</a></article>
-          <div class="sports-list" id="sportsList"><div class="empty-state">Loading sports headlines…</div></div>
+        <div class="movie-card-content">
+          <span class="eyebrow">${escapeHTML(movie.category)}</span>
+          <h3>${escapeHTML(movie.title)}</h3>
+          <p>${escapeHTML(movie.year)}</p>
+          <small>${escapeHTML(movie.description)}</small>
         </div>
-      </div>
-    </section>
+      </button>
+    </article>
+  `).join(""));
 
-    <section class="section-shell section-block" id="tv">
-      <div class="section-heading">
-        <div><span class="eyebrow">WATCH PUBLIC BROADCASTS</span><h2>Live <span>television</span></h2><p>Choose a publicly available stream. Some broadcasters restrict embedding or viewing by location.</p></div>
-        <span class="section-count" id="tvCount">0 channels loaded</span>
-      </div>
-      <div class="media-layout">
-        <div class="player-column">
-          <div class="video-frame" id="tvFrame">
-            <video id="tvVideo" controls playsinline preload="none"></video>
-            <iframe id="tvEmbed" title="Television player" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen class="hidden"></iframe>
-            <div class="player-placeholder" id="tvPlaceholder"><div class="play-emblem">▶</div><h3>Select a TV channel</h3><p>Available public streams play here.</p></div>
-          </div>
-          <div class="now-playing"><div><span class="eyebrow">NOW PLAYING</span><h3 id="tvNowPlaying">No channel selected</h3></div><a class="text-link hidden" id="tvExternal" href="#" target="_blank" rel="noopener noreferrer">Open broadcaster ↗</a></div>
-          <p class="player-message" id="tvMessage" role="status">Choose a channel from the list. Streams may be unavailable or region-restricted.</p>
-        </div>
-        <aside class="channel-panel">
-          <div class="panel-heading"><h3>Channel guide</h3><span class="live-pill"><i></i> PUBLIC</span></div>
-          <div class="channel-tools"><input id="tvSearch" type="search" placeholder="Find a channel..."><select id="tvCountry"><option value="all">All countries</option></select></div>
-          <div class="channel-list" id="tvList"><div class="empty-state">Loading channel list…</div></div>
-          <div class="panel-footer"><button class="button button-outline button-small" id="refreshTV">↻ Reload channels</button><a href="https://github.com/freecasthub/public-iptv" target="_blank" rel="noopener noreferrer">Playlist source ↗</a></div>
-        </aside>
-      </div>
-      <p class="fine-print">ITT-TV does not host or bypass paid television services. Streams are loaded from public third-party sources; availability and rights are determined by each broadcaster and source provider.</p>
-    </section>
+  $("movieGrid")?.querySelectorAll("[data-movie-index]").forEach(button => {
+    button.addEventListener("click", () => {
+      const movie = state.movies[
+        Number(button.dataset.movieIndex)
+      ];
 
-    <section class="radio-section section-block" id="radio">
-      <div class="section-shell">
-        <div class="section-heading">
-          <div><span class="eyebrow">TUNE IN FROM ANYWHERE</span><h2>World <span>radio</span></h2><p>Discover public radio stations by country, name or language.</p></div>
-          <span class="section-count" id="radioCount">Finding stations…</span>
-        </div>
-        <div class="radio-player-card">
-          <div class="radio-art"><span>♫</span><small>ITT RADIO</small></div>
-          <div class="radio-current"><span class="eyebrow">NOW ON AIR</span><h3 id="radioNowPlaying">Choose a radio station</h3><p id="radioMeta">Radio Browser public directory</p><audio id="radioPlayer" controls preload="none"></audio><p id="radioMessage" class="player-message" role="status">Select a station below to start listening.</p></div>
-        </div>
-        <div class="radio-toolbar"><input id="radioSearch" type="search" placeholder="Search station, country or language..."><select id="radioCountry"><option value="all">All countries</option><option value="Rwanda">Rwanda</option></select><button class="button button-outline" id="refreshRadios">↻ Refresh stations</button></div>
-        <div class="radio-grid" id="radioList"><div class="empty-state">Loading radio stations…</div></div>
-        <p class="fine-print">Radio directory data is supplied by Radio Browser. A station may stop working, require a regional connection or change its stream address.</p>
-      </div>
-    </section>
+      if (movie) playMovie(movie);
+    });
+  });
+}
 
-    <section class="section-shell section-block" id="movies">
-      <div class="section-heading">
-        <div><span class="eyebrow">CINEMA CORNER</span><h2>Movies <span>&amp; films</span></h2><p>Explore free films and public-domain or openly licensed video examples.</p></div>
-        <span class="section-count">Free-to-watch samples</span>
-      </div>
-      <div class="movie-player-layout">
-        <div class="movie-player-wrap">
-          <video id="moviePlayer" controls playsinline preload="metadata"></video>
-          <div class="movie-placeholder" id="moviePlaceholder"><span>▶</span><h3>Your movie screen</h3><p>Select a title to play a supported film.</p></div>
-          <div class="now-playing"><div><span class="eyebrow">SELECTED FILM</span><h3 id="movieNowPlaying">No film selected</h3></div></div>
-          <p id="movieMessage" class="player-message">Only sample titles with public viewing sources are listed.</p>
-        </div>
-        <div class="movie-side-note"><span class="eyebrow">WATCH RESPONSIBLY</span><h3>Discover independent cinema.</h3><p>Film links are provided for public viewing. ITT-TV does not provide pirated or subscription-only movie copies.</p><a href="https://www.blender.org/about/projects/" target="_blank" rel="noopener noreferrer" class="text-link">Explore Blender open movies ↗</a></div>
-      </div>
-      <div class="movie-grid" id="movieGrid"></div>
-    </section>
+function playMovie(movie) {
+  const player = $("moviePlayer");
 
-    <section class="about-section section-block" id="about">
-      <div class="section-shell about-inner">
-        <div><span class="eyebrow">ABOUT THE PLATFORM</span><h2>Media without <span>borders.</span></h2></div>
-        <p>ITT-TV brings news links, public television streams, worldwide radio discovery and free-to-watch film resources together in one responsive website. Content remains owned and operated by its original publishers and broadcasters.</p>
-      </div>
-    </section>
-  </main>
+  if (!player) return;
 
-  <footer class="site-footer">
-    <div class="section-shell footer-inner">
-      <a class="brand footer-brand" href="#home"><span class="brand-mark">ITT</span><span class="brand-dash">-</span><span class="brand-tv">TV</span><small>WORLD MEDIA</small></a>
-      <p>© <span id="year"></span> ITT-TV. Independent media discovery platform.</p>
-      <a href="#home" class="text-link">Back to top ↑</a>
-    </div>
-    <p class="footer-disclaimer">External content, logos, streams and articles belong to their respective owners. ITT-TV does not guarantee third-party availability.</p>
-  </footer>
+  const url = safeURL(movie.video);
+  if (!url) return;
 
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
-  <script src="app.js"></script>
-</body>
-</html>
+  state.currentMovie = movie;
+
+  player.pause();
+  player.src = url;
+  player.load();
+
+  $("moviePlaceholder")?.classList.add("hidden");
+
+  setText("movieNowPlaying", movie.title);
+  showStatus(
+    "movieMessage",
+    "Loading film..."
+  );
+
+  player.play().then(() => {
+    showStatus("movieMessage", "Film is playing.");
+  }).catch(() => {
+    showStatus(
+      "movieMessage",
+      "Press Play to start this film."
+    );
+  });
+
+  player.onerror = () => {
+    showStatus(
+      "movieMessage",
+      "This sample film is temporarily unavailable."
+    );
+  };
+
+  $("movies")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ===================== PLAYER CLEANUP ===================== */
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    // Do not automatically stop radio or TV.
+    // The user controls playback.
+  }
+});
+
+window.addEventListener("beforeunload", () => {
+  if (state.hls) {
+    state.hls.destroy();
+  }
+});
+
+/* ===================== INITIALIZATION ===================== */
+
+async function startITTV() {
+  setupNavigation();
+  setupNews();
+  setupTV();
+  setupRadio();
+  loadMovies();
+
+  // Load independent sections together.
+  await Promise.allSettled([
+    loadNews(),
+    loadTV(),
+    loadRadios()
+  ]);
+
+  console.log("ITT-TV initialized successfully.");
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", startITTV);
+} else {
+  startITTV();
+}
