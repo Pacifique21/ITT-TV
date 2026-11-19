@@ -39,8 +39,6 @@ const RADIO_SERVERS = [
   "https://fr1.api.radio-browser.info",
   "https://nl1.api.radio-browser.info"
 ];
-];
-
 /* ---------------- BASIC HELPERS ---------------- */
 
 function saved(key) {
@@ -832,15 +830,6 @@ async function loadRadio() {
     const timeout = setTimeout(() => controller.abort(), 12000);
 
     try {
-      const response = await fetch(
-        `${server}/json/stations/search?${params.toString()}`,
-        {
-          method: "GET",
-          cache: "no-store",
-          headers: { Accept: "application/json" },
-          signal: controller.signal
-        }
-      );
 
       if (!response.ok) {
         throw new Error("Radio server returned " + response.status);
