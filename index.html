@@ -3,205 +3,146 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#080e18">
-  <title>ITT-TV — Live TV & Radio Worldwide</title>
-  <meta name="description" content="Explore live TV channels and radio stations from Rwanda and around the world.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#07111f">
+  <title>ITT-TV | Live TV, Radio & Movies</title>
+  <meta name="description" content="Watch live television, listen to radio and discover movies on ITT-TV.">
   <link rel="stylesheet" href="styles.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
-  <script defer src="app.js"></script>
+  <link rel="preconnect" href="https://iptv-org.github.io">
+  <link rel="preconnect" href="https://de1.api.radio-browser.info">
+  <link rel="preconnect" href="https://archive.org">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js" defer></script>
+  <script src="app.js" defer></script>
 </head>
 <body>
-<header class="topbar">
-  <a class="brand" href="#" id="homeLink">
-    <span class="brand-logo">ITT</span>
-    <span>ITT-TV</span>
-  </a>
+  <header class="topbar">
+    <a class="brand" href="#" data-page="home">ITT<span>TV</span></a>
+    <div class="search-wrap">
+      <input id="globalSearch" placeholder="Search TV, radio or movies..." aria-label="Search">
+    </div>
+    <button class="menu-toggle" id="menuToggle">☰</button>
+  </header>
 
-  <div class="top-search">
-    <span>⌕</span>
-    <input id="globalSearch" type="search" placeholder="Search TV channels, countries...">
-  </div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <p class="side-label">MENU</p>
+      <button class="nav active" data-page="home">⌂ Home</button>
+      <button class="nav" data-page="tv">▣ Live TV</button>
+      <button class="nav" data-page="radio">♫ Radio</button>
+      <button class="nav" data-page="movies">▶ Movies</button>
+      <button class="nav" data-page="favorites">♡ Favorites</button>
+      <button class="nav" data-page="recent">◷ Recently watched</button>
+      <div class="side-note">ITT-TV<br><small>Entertainment everywhere</small></div>
+    </aside>
 
-  <div class="top-actions">
-    <button class="top-link active" data-page="homePage">Home</button>
-    <button class="top-link" data-page="tvPage">Live TV</button>
-    <button class="top-link" data-page="radioPage">Radio</button>
-    <button class="top-link" data-page="favoritesPage">♡ Favorites</button>
-  </div>
-</header>
-
-<div class="app-layout">
-  <aside class="sidebar">
-    <p class="side-title">DISCOVER</p>
-    <button class="side-link active" data-page="homePage">⌂ <span>Home</span></button>
-    <button class="side-link" data-page="tvPage">▣ <span>All TV Channels</span></button>
-    <button class="side-link" data-page="radioPage">♫ <span>Live Radio</span></button>
-    <button class="side-link" data-page="favoritesPage">♡ <span>Favorites</span></button>
-    <button class="side-link" data-page="recentPage">◷ <span>Recently Watched</span></button>
-
-    <div class="side-divider"></div>
-    <p class="side-title">TV CATEGORIES</p>
-    <div id="categoryMenu"></div>
-
-    <div class="side-divider"></div>
-    <p class="side-title">COUNTRIES</p>
-    <div id="countryMenu"></div>
-  </aside>
-
-  <main class="main-content">
-
-    <section id="homePage" class="page-section">
-      <section class="hero">
-        <div class="hero-content">
-          <span class="live-pill"><i></i> WORLDWIDE LIVE TV</span>
-          <h1>Your world.<br><span>Your channels.</span></h1>
-          <p>Discover television and radio from Rwanda and around the world.</p>
-          <button class="primary-btn" data-page="tvPage">Explore TV Channels →</button>
+    <main class="content">
+      <section id="homePage" class="page active">
+        <div class="hero">
+          <div>
+            <span class="eyebrow">WELCOME TO ITT-TV</span>
+            <h1>Entertainment<br>without borders.</h1>
+            <p>Watch television, listen to radio and discover movies.</p>
+            <div class="hero-actions">
+              <button class="primary" data-page="tv">Explore Live TV</button>
+              <button class="secondary" data-page="movies">Explore Movies</button>
+            </div>
+          </div>
+          <div class="hero-symbol">▶</div>
         </div>
-        <div class="hero-decoration">
-          <div class="globe">🌍</div>
-          <span class="orbit orbit-one"></span>
-          <span class="orbit orbit-two"></span>
+
+        <div class="stats">
+          <div class="stat"><strong id="totalTV">—</strong><span>TV channels</span></div>
+          <div class="stat"><strong id="totalRadio">—</strong><span>Radio stations</span></div>
+          <div class="stat"><strong id="totalMovies">—</strong><span>Movies found</span></div>
         </div>
-      </section>
 
-      <div class="stats-row">
-        <div><strong id="totalTV">0</strong><span>TV channels</span></div>
-        <div><strong id="totalRadio">0</strong><span>Radio stations</span></div>
-        <div><strong id="totalCountries">0</strong><span>Countries</span></div>
-      </div>
-
-      <section class="catalog-section">
         <div class="section-heading">
-          <div><p class="eyebrow">EXPLORE</p><h2>Browse by category</h2></div>
+          <div><h2>Explore categories</h2><p>Choose what you want to enjoy</p></div>
         </div>
-        <div id="homeCategories" class="category-cards"></div>
+        <div class="category-grid">
+          <button class="category-card" data-page="tv"><span>📺</span><b>Live TV</b><small>Watch channels</small></button>
+          <button class="category-card" data-page="radio"><span>📻</span><b>Radio</b><small>Listen live</small></button>
+          <button class="category-card" data-page="movies"><span>🎬</span><b>Movies</b><small>Discover films</small></button>
+        </div>
+
+        <div class="section-heading"><div><h2>Featured TV channels</h2><p>Available channels</p></div></div>
+        <div id="featuredChannels" class="card-grid"></div>
+
+        <div class="section-heading"><div><h2>Recently watched</h2></div></div>
+        <div id="homeRecent" class="card-grid"></div>
       </section>
 
-      <section class="catalog-section">
-        <div class="section-heading">
-          <div><p class="eyebrow">DISCOVER SOMETHING NEW</p><h2>Featured channels</h2></div>
-          <button class="text-btn" data-page="tvPage">See all →</button>
+      <section id="tvPage" class="page">
+        <div class="page-heading"><div><h1>Live TV</h1><p>Choose a channel and watch it here.</p></div></div>
+        <div class="player-panel">
+          <video id="tvVideo" controls playsinline preload="none" width="1280" height="720"></video>
+          <div id="videoPlaceholder" class="player-placeholder">
+            <span>▶</span><p>Select a TV channel to start watching</p>
+          </div>
+          <div class="now-playing"><div><small>NOW PLAYING</small><h3 id="tvNowPlaying">No channel selected</h3></div><button id="playerFavorite" class="icon-btn">♡</button></div>
+          <p id="tvMessage" class="message" role="status"></p>
         </div>
-        <div id="featuredChannels" class="channel-grid"></div>
+        <div class="filters">
+          <input id="tvSearch" placeholder="Search channels...">
+          <select id="tvCountry"><option value="">All countries</option></select>
+          <select id="tvCategory"><option value="">All categories</option></select>
+          <select id="tvSort"><option value="name">Name A-Z</option><option value="country">Country</option></select>
+        </div>
+        <p id="tvResultCount" class="result-count">Loading channels...</p>
+        <div id="tvGrid" class="card-grid"></div>
+        <button id="moreChannels" class="secondary more-btn">Load more channels</button>
       </section>
 
-      <section class="catalog-section">
-        <div class="section-heading">
-          <div><p class="eyebrow">YOUR HISTORY</p><h2>Recently watched</h2></div>
-          <button class="text-btn" data-page="recentPage">See all →</button>
-        </div>
-        <div id="homeRecent" class="channel-grid"></div>
-      </section>
-    </section>
-
-    <section id="tvPage" class="page-section hidden">
-      <div class="page-heading">
-        <p class="eyebrow">TELEVISION DIRECTORY</p>
-        <h1>Live TV Channels</h1>
-        <p>Choose a country or category and watch available public streams.</p>
-      </div>
-
-      <div class="filter-bar">
-        <input id="tvSearch" type="search" placeholder="Search channels...">
-        <select id="tvCountry"><option value="">All countries</option></select>
-        <select id="tvCategory"><option value="">All categories</option></select>
-        <select id="tvSort">
-          <option value="name">Name A–Z</option>
-          <option value="country">Country</option>
-        </select>
-      </div>
-
-      <div class="result-line">
-        <span id="tvResultCount">Loading channels...</span>
-        <button id="clearTVFilters" class="text-btn">Clear filters</button>
-      </div>
-      <div id="tvGrid" class="channel-grid"></div>
-    </section>
-
-    <section id="radioPage" class="page-section hidden">
-      <div class="page-heading">
-        <p class="eyebrow">RADIO DIRECTORY</p>
-        <h1>Live Radio Stations</h1>
-        <p>Listen to radio stations from Rwanda and across the world.</p>
-      </div>
-
-      <div class="radio-player-card">
-        <div class="radio-art">♫</div>
-        <div class="radio-player-info">
-          <span class="eyebrow">NOW PLAYING</span>
-          <h2 id="radioNowPlaying">Choose a radio station</h2>
-          <p id="radioDetails">Your radio player is ready.</p>
+      <section id="radioPage" class="page">
+        <div class="page-heading"><div><h1>Radio</h1><p>Discover radio stations from different countries.</p></div></div>
+        <div class="radio-player">
+          <div class="radio-icon">♫</div>
+          <div class="radio-info"><small>NOW PLAYING</small><h2 id="radioNowPlaying">Choose a radio station</h2><p id="radioDetails">Ready to play</p></div>
           <audio id="radioPlayer" controls preload="none"></audio>
-          <p id="radioMessage" class="player-message"></p>
         </div>
-      </div>
-
-      <div class="filter-bar">
-        <input id="radioSearch" type="search" placeholder="Search radio stations...">
-        <select id="radioCountry"><option value="">All countries</option></select>
-        <select id="radioLanguage"><option value="">All languages</option></select>
-      </div>
-      <div class="result-line"><span id="radioResultCount">Loading radios...</span></div>
-      <div id="radioGrid" class="channel-grid"></div>
-    </section>
-
-    <section id="favoritesPage" class="page-section hidden">
-      <div class="page-heading">
-        <p class="eyebrow">YOUR COLLECTION</p>
-        <h1>Favorite Channels</h1>
-        <p>Channels you have saved in this browser.</p>
-      </div>
-      <div id="favoritesGrid" class="channel-grid"></div>
-    </section>
-
-    <section id="recentPage" class="page-section hidden">
-      <div class="page-heading">
-        <p class="eyebrow">YOUR HISTORY</p>
-        <h1>Recently Watched</h1>
-        <p>Quickly return to channels you watched before.</p>
-      </div>
-      <div id="recentGrid" class="channel-grid"></div>
-    </section>
-
-    <section id="playerPage" class="page-section hidden">
-      <button id="backToChannels" class="text-btn">← Back to channels</button>
-      <div class="watch-layout">
-        <div class="watch-main">
-          <div class="video-frame">
-            <video id="tvVideo" controls playsinline></video>
-            <div id="videoPlaceholder" class="video-placeholder">
-              <div class="big-play">▶</div>
-              <h2>ITT-TV Live Player</h2>
-              <p>Select a channel to start watching.</p>
-            </div>
-          </div>
-          <div class="watch-details">
-            <div>
-              <span class="eyebrow">NOW PLAYING</span>
-              <h2 id="tvNowPlaying">No channel selected</h2>
-              <p id="tvDetails">Live television</p>
-            </div>
-            <button id="playerFavorite" class="favorite-btn">♡ Save</button>
-          </div>
-          <p id="tvMessage" class="player-message"></p>
+        <p id="radioMessage" class="message" role="status"></p>
+        <div class="filters">
+          <input id="radioSearch" placeholder="Search radio stations...">
+          <select id="radioCountry"><option value="">All countries</option></select>
+          <select id="radioLanguage"><option value="">All languages</option></select>
         </div>
-        <aside class="watch-sidebar">
-          <h3>More channels</h3>
-          <div id="moreChannels"></div>
-        </aside>
-      </div>
-    </section>
+        <p id="radioResultCount" class="result-count"></p>
+        <div id="radioGrid" class="card-grid"></div>
+        <button id="moreRadio" class="secondary more-btn">Load more stations</button>
+      </section>
 
-    <footer>
-      <div class="brand"><span class="brand-logo">ITT</span> ITT-TV</div>
-      <p>Public stream directory. Broadcasts are provided by their respective owners.</p>
-      <p>© <span id="year"></span> ITT-TV</p>
-    </footer>
-  </main>
-</div>
+      <section id="moviesPage" class="page">
+        <div class="page-heading">
+          <div><h1>Movies</h1><p>Discover films available with licence information.</p></div>
+        </div>
+        <div class="movie-search">
+          <input id="movieSearch" placeholder="Search movie titles...">
+          <button id="searchMovies" class="primary">Search movies</button>
+        </div>
+        <p class="movie-notice">Movie availability and playback depend on the archive's hosting and the licence shown with each title. Only use films you are permitted to watch.</p>
+        <div id="moviePlayerPanel" class="player-panel hidden">
+          <video id="movieVideo" controls playsinline preload="none" width="1280" height="720"></video>
+          <div class="now-playing"><div><small>NOW PLAYING</small><h3 id="movieNowPlaying">No movie selected</h3></div></div>
+          <p id="movieMessage" class="message" role="status"></p>
+        </div>
+        <p id="movieResultCount" class="result-count">Search for a movie to begin.</p>
+        <div id="movieGrid" class="card-grid"></div>
+        <button id="moreMovies" class="secondary more-btn">Load more movies</button>
+      </section>
 
-<div id="toast" class="toast"></div>
+      <section id="favoritesPage" class="page">
+        <div class="page-heading"><div><h1>Favorites</h1><p>Your saved TV channels and radio stations.</p></div></div>
+        <div id="favoritesGrid" class="card-grid"></div>
+      </section>
+
+      <section id="recentPage" class="page">
+        <div class="page-heading"><div><h1>Recently watched</h1><p>Your recent channels.</p></div></div>
+        <div id="recentGrid" class="card-grid"></div>
+      </section>
+
+      <footer>© <span id="year"></span> ITT-TV. Media streams are provided by their respective sources.</footer>
+    </main>
+  </div>
+  <div id="toast" class="toast"></div>
 </body>
 </html>
