@@ -34,9 +34,11 @@ const IPTV_MOVIES =
   "https://iptv-org.github.io/iptv/categories/movies.m3u";
 
 const RADIO_SERVERS = [
+  "https://all.api.radio-browser.info",
   "https://de1.api.radio-browser.info",
   "https://fr1.api.radio-browser.info",
   "https://nl1.api.radio-browser.info"
+];
 ];
 
 /* ---------------- BASIC HELPERS ---------------- */
