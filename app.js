@@ -806,23 +806,91 @@ function renderHome() {
 
 /* ---------------- RADIO DIRECTORY ---------------- */
 
+
 async function loadRadio() {
   const requestNumber = ++state.radioRequest;
 
   message("radioResultCount", "Loading radio stations...");
+  setHTML(
+    "radioGrid",
+    '<div class="empty">Connecting to radio directory...</div>'
+  );
 
-  let stations = null;
+  const params = new URLSearchParams({
+    limit: "500",
+    order: "clickcount",
+    reverse: "true",
+    hidebroken: "true"
+  });
+
+  let stations = [];
 
   for (const server of RADIO_SERVERS) {
     if (requestNumber !== state.radioRequest) return;
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
     try {
-      const params = new URLSearchParams({
-        limit: "1000",
-        order: "clickcount",
-        reverse: "true",
-        hidebroken: "true"
-      });
+      const response = await fetch(
+        `${server}/json/stations/search?${params.toString()}`,
+        {
+          method: "GET",
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+          signal: controller.signal
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Radio server returned " + response.status);
+      }
+
+      const data = await response.json();
+
+      if (Array.isArray(data) && data.length > 0) {
+        stations = data;
+        break;
+      }
+    } catch (error) {
+      console.warn("Radio server failed:", server, error);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  if (requestNumber !== state.radioRequest) return;
+
+  state.radios = stations.filter(station =>
+    station.name &&
+    station.url_resolved &&
+    station.lastcheckok !== 0
+  );
+
+  if (!state.radios.length) {
+    message("radioResultCount", "Radio stations are temporarily unavailable.");
+    setHTML(
+      "radioGrid",
+      '<div class="empty">Could not load radio stations. Check your internet and try again.</div>'
+    );
+    setText("totalRadio", 0);
+    return;
+  }
+
+  state.radioLimit = 40;
+
+  populateRadioFilters();
+  renderRadio();
+
+  setText("totalRadio", state.radios.length);
+  message(
+    "radioResultCount",
+    state.radios.length + " radio stations found."
+  );
+
+  renderHome();
+}
+
 
       const response = await fetch(
         `${server}/json/stations/search?${params.toString()}`,
