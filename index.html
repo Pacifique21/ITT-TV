@@ -1,148 +1,207 @@
 
 <!DOCTYPE html>
-<html lang="rw">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#07111f">
-  <title>ITT-TV | Live TV & Radio</title>
-  <meta name="description" content="Watch live television and listen to radio stations from Rwanda and around the world.">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080e18">
+  <title>ITT-TV — Live TV & Radio Worldwide</title>
+  <meta name="description" content="Explore live TV channels and radio stations from Rwanda and around the world.">
   <link rel="stylesheet" href="styles.css">
   <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="#">
-      <span class="brand-mark">ITT</span>
-      <span>ITT-TV</span>
-    </a>
-    <nav class="topnav">
-      <button class="nav-btn active" data-section="tvSection">Live TV</button>
-      <button class="nav-btn" data-section="radioSection">Radio</button>
-    </nav>
-    <span class="live-indicator"><i></i> LIVE STREAMING</span>
-  </header>
+<header class="topbar">
+  <a class="brand" href="#" id="homeLink">
+    <span class="brand-logo">ITT</span>
+    <span>ITT-TV</span>
+  </a>
 
-  <main class="page">
-    <section class="welcome">
-      <div>
-        <p class="eyebrow">YOUR WORLD OF ENTERTAINMENT</p>
-        <h1>Watch. Listen. <span>Explore.</span></h1>
-        <p class="welcome-text">TV na Radio byo mu Rwanda no ku isi hose, ahantu hamwe.</p>
+  <div class="top-search">
+    <span>⌕</span>
+    <input id="globalSearch" type="search" placeholder="Search TV channels, countries...">
+  </div>
+
+  <div class="top-actions">
+    <button class="top-link active" data-page="homePage">Home</button>
+    <button class="top-link" data-page="tvPage">Live TV</button>
+    <button class="top-link" data-page="radioPage">Radio</button>
+    <button class="top-link" data-page="favoritesPage">♡ Favorites</button>
+  </div>
+</header>
+
+<div class="app-layout">
+  <aside class="sidebar">
+    <p class="side-title">DISCOVER</p>
+    <button class="side-link active" data-page="homePage">⌂ <span>Home</span></button>
+    <button class="side-link" data-page="tvPage">▣ <span>All TV Channels</span></button>
+    <button class="side-link" data-page="radioPage">♫ <span>Live Radio</span></button>
+    <button class="side-link" data-page="favoritesPage">♡ <span>Favorites</span></button>
+    <button class="side-link" data-page="recentPage">◷ <span>Recently Watched</span></button>
+
+    <div class="side-divider"></div>
+    <p class="side-title">TV CATEGORIES</p>
+    <div id="categoryMenu"></div>
+
+    <div class="side-divider"></div>
+    <p class="side-title">COUNTRIES</p>
+    <div id="countryMenu"></div>
+  </aside>
+
+  <main class="main-content">
+
+    <section id="homePage" class="page-section">
+      <section class="hero">
+        <div class="hero-content">
+          <span class="live-pill"><i></i> WORLDWIDE LIVE TV</span>
+          <h1>Your world.<br><span>Your channels.</span></h1>
+          <p>Discover television and radio from Rwanda and around the world.</p>
+          <button class="primary-btn" data-page="tvPage">Explore TV Channels →</button>
+        </div>
+        <div class="hero-decoration">
+          <div class="globe">🌍</div>
+          <span class="orbit orbit-one"></span>
+          <span class="orbit orbit-two"></span>
+        </div>
+      </section>
+
+      <div class="stats-row">
+        <div><strong id="totalTV">0</strong><span>TV channels</span></div>
+        <div><strong id="totalRadio">0</strong><span>Radio stations</span></div>
+        <div><strong id="totalCountries">0</strong><span>Countries</span></div>
       </div>
-      <div class="welcome-stat">
-        <strong id="totalChannels">0</strong>
-        <span>TV channels</span>
-        <strong id="totalRadios">0</strong>
-        <span>Radio stations</span>
-      </div>
+
+      <section class="catalog-section">
+        <div class="section-heading">
+          <div><p class="eyebrow">EXPLORE</p><h2>Browse by category</h2></div>
+        </div>
+        <div id="homeCategories" class="category-cards"></div>
+      </section>
+
+      <section class="catalog-section">
+        <div class="section-heading">
+          <div><p class="eyebrow">DISCOVER SOMETHING NEW</p><h2>Featured channels</h2></div>
+          <button class="text-btn" data-page="tvPage">See all →</button>
+        </div>
+        <div id="featuredChannels" class="channel-grid"></div>
+      </section>
+
+      <section class="catalog-section">
+        <div class="section-heading">
+          <div><p class="eyebrow">YOUR HISTORY</p><h2>Recently watched</h2></div>
+          <button class="text-btn" data-page="recentPage">See all →</button>
+        </div>
+        <div id="homeRecent" class="channel-grid"></div>
+      </section>
     </section>
 
-    <section id="tvSection" class="content-section">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">TELEVISION</p>
-          <h2>Live TV Channels</h2>
-          <p class="muted">Hitamo channel uyirebere hano muri ITT-TV.</p>
-        </div>
-        <span id="tvStatus" class="status">Loading TV channels...</span>
+    <section id="tvPage" class="page-section hidden">
+      <div class="page-heading">
+        <p class="eyebrow">TELEVISION DIRECTORY</p>
+        <h1>Live TV Channels</h1>
+        <p>Choose a country or category and watch available public streams.</p>
       </div>
 
-      <div class="player-layout">
-        <div class="player-column">
-          <div class="video-shell">
-            <video id="tvVideo" controls playsinline preload="none"></video>
-            <div id="tvEmpty" class="player-empty">
-              <div class="play-symbol">▶</div>
-              <h3>Welcome to ITT-TV</h3>
-              <p>Hitamo channel ku rutonde kugira ngo utangire kureba.</p>
+      <div class="filter-bar">
+        <input id="tvSearch" type="search" placeholder="Search channels...">
+        <select id="tvCountry"><option value="">All countries</option></select>
+        <select id="tvCategory"><option value="">All categories</option></select>
+        <select id="tvSort">
+          <option value="name">Name A–Z</option>
+          <option value="country">Country</option>
+        </select>
+      </div>
+
+      <div class="result-line">
+        <span id="tvResultCount">Loading channels...</span>
+        <button id="clearTVFilters" class="text-btn">Clear filters</button>
+      </div>
+      <div id="tvGrid" class="channel-grid"></div>
+    </section>
+
+    <section id="radioPage" class="page-section hidden">
+      <div class="page-heading">
+        <p class="eyebrow">RADIO DIRECTORY</p>
+        <h1>Live Radio Stations</h1>
+        <p>Listen to radio stations from Rwanda and across the world.</p>
+      </div>
+
+      <div class="radio-player-card">
+        <div class="radio-art">♫</div>
+        <div class="radio-player-info">
+          <span class="eyebrow">NOW PLAYING</span>
+          <h2 id="radioNowPlaying">Choose a radio station</h2>
+          <p id="radioDetails">Your radio player is ready.</p>
+          <audio id="radioPlayer" controls preload="none"></audio>
+          <p id="radioMessage" class="player-message"></p>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <input id="radioSearch" type="search" placeholder="Search radio stations...">
+        <select id="radioCountry"><option value="">All countries</option></select>
+        <select id="radioLanguage"><option value="">All languages</option></select>
+      </div>
+      <div class="result-line"><span id="radioResultCount">Loading radios...</span></div>
+      <div id="radioGrid" class="channel-grid"></div>
+    </section>
+
+    <section id="favoritesPage" class="page-section hidden">
+      <div class="page-heading">
+        <p class="eyebrow">YOUR COLLECTION</p>
+        <h1>Favorite Channels</h1>
+        <p>Channels you have saved in this browser.</p>
+      </div>
+      <div id="favoritesGrid" class="channel-grid"></div>
+    </section>
+
+    <section id="recentPage" class="page-section hidden">
+      <div class="page-heading">
+        <p class="eyebrow">YOUR HISTORY</p>
+        <h1>Recently Watched</h1>
+        <p>Quickly return to channels you watched before.</p>
+      </div>
+      <div id="recentGrid" class="channel-grid"></div>
+    </section>
+
+    <section id="playerPage" class="page-section hidden">
+      <button id="backToChannels" class="text-btn">← Back to channels</button>
+      <div class="watch-layout">
+        <div class="watch-main">
+          <div class="video-frame">
+            <video id="tvVideo" controls playsinline></video>
+            <div id="videoPlaceholder" class="video-placeholder">
+              <div class="big-play">▶</div>
+              <h2>ITT-TV Live Player</h2>
+              <p>Select a channel to start watching.</p>
             </div>
-            <div class="player-live">● LIVE</div>
           </div>
-          <div class="now-playing">
+          <div class="watch-details">
             <div>
-              <span class="muted small">NOW PLAYING</span>
-              <h3 id="tvNowPlaying">Nta channel iratoranywa</h3>
-              <p id="tvDetails" class="muted">Hitamo TV ushaka kureba</p>
+              <span class="eyebrow">NOW PLAYING</span>
+              <h2 id="tvNowPlaying">No channel selected</h2>
+              <p id="tvDetails">Live television</p>
             </div>
-            <a id="tvHomepage" class="external-link" href="#" target="_blank" rel="noopener" hidden>Official website ↗</a>
+            <button id="playerFavorite" class="favorite-btn">♡ Save</button>
           </div>
-          <p id="tvMessage" class="player-message" role="status"></p>
+          <p id="tvMessage" class="player-message"></p>
         </div>
-
-        <aside class="side-panel">
-          <div class="panel-heading">
-            <h3>TV Channels</h3>
-            <span id="tvCount" class="count">0</span>
-          </div>
-          <input id="tvSearch" class="search" type="search" placeholder="Search TV channels...">
-          <div class="filter-row">
-            <select id="tvCountry" aria-label="Filter TV by country">
-              <option value="">All countries</option>
-              <option value="Rwanda">Rwanda</option>
-            </select>
-            <select id="tvCategory" aria-label="Filter TV by category">
-              <option value="">All categories</option>
-            </select>
-          </div>
-          <div id="tvList" class="station-list">
-            <p class="loading">Loading channels...</p>
-          </div>
+        <aside class="watch-sidebar">
+          <h3>More channels</h3>
+          <div id="moreChannels"></div>
         </aside>
       </div>
     </section>
 
-    <section id="radioSection" class="content-section hidden">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">RADIO</p>
-          <h2>Live Radio Stations</h2>
-          <p class="muted">Umva amaradiyo yo mu Rwanda no ku isi hose.</p>
-        </div>
-        <span id="radioStatus" class="status">Loading radio stations...</span>
-      </div>
-
-      <div class="radio-layout">
-        <div class="radio-main">
-          <div class="radio-art">
-            <div class="radio-disc"><span>ITT</span></div>
-            <p class="eyebrow">ITT-TV RADIO PLAYER</p>
-            <h2 id="radioNowPlaying">Hitamo radio</h2>
-            <p id="radioDetails" class="muted">Nta radio irimo gucuranga</p>
-            <audio id="radioPlayer" controls preload="none"></audio>
-            <p id="radioMessage" class="player-message" role="status"></p>
-          </div>
-        </div>
-
-        <aside class="side-panel radio-side">
-          <div class="panel-heading">
-            <h3>Radio Stations</h3>
-            <span id="radioCount" class="count">0</span>
-          </div>
-          <input id="radioSearch" class="search" type="search" placeholder="Search radio stations...">
-          <div class="filter-row">
-            <select id="radioCountry" aria-label="Filter radio by country">
-              <option value="">All countries</option>
-              <option value="Rwanda">Rwanda</option>
-            </select>
-            <select id="radioLanguage" aria-label="Filter radio by language">
-              <option value="">All languages</option>
-            </select>
-          </div>
-          <div id="radioList" class="station-list">
-            <p class="loading">Loading radio stations...</p>
-          </div>
-        </aside>
-      </div>
-    </section>
-
-    <footer class="footer">
-      <div class="brand"><span class="brand-mark">ITT</span> ITT-TV</div>
-      <p>Streams are provided by their respective broadcasters and public directories. ITT-TV does not host the broadcasts.</p>
+    <footer>
+      <div class="brand"><span class="brand-logo">ITT</span> ITT-TV</div>
+      <p>Public stream directory. Broadcasts are provided by their respective owners.</p>
       <p>© <span id="year"></span> ITT-TV</p>
     </footer>
   </main>
-  <div id="toast" class="toast" role="status"></div>
+</div>
+
+<div id="toast" class="toast"></div>
 </body>
 </html>
