@@ -896,3 +896,45 @@ footer a,
     transition-duration: .01ms !important;
   }
 }
+/* FIX ITT-TV SCREEN WIDTH */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+img,
+video,
+iframe {
+  max-width: 100%;
+}
+
+.container,
+.hero,
+section {
+  max-width: 100%;
+}
+
+.hero {
+  min-height: 420px;
+  padding: 60px clamp(20px, 6vw, 90px);
+}
+
+.hero h1 {
+  font-size: clamp(36px, 5vw, 76px);
+  line-height: 1.15;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 768px) {
+  .hero {
+    min-height: 350px;
+    padding: 35px 20px;
+  }
+}
