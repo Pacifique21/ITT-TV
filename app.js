@@ -433,7 +433,69 @@ function renderHome() {
 
 /* RADIO DIRECTORY */
 
+
 async function loadRadio() {
+  message("radioResultCount", "Turimo gushaka amaradiyo...");
+
+  const servers = [
+    "https://de1.api.radio-browser.info",
+    "https://fr1.api.radio-browser.info",
+    "https://nl1.api.radio-browser.info"
+  ];
+
+  let stations = null;
+
+  for (const server of servers) {
+    try {
+      const params = new URLSearchParams({
+        limit: "1000",
+        order: "clickcount",
+        reverse: "true",
+        hidebroken: "true"
+      });
+
+      const response = await fetch(
+        `${server}/json/stations/search?${params.toString()}`,
+        { cache: "no-store" }
+      );
+
+      if (!response.ok) continue;
+
+      const data = await response.json();
+
+      if (Array.isArray(data) && data.length > 0) {
+        stations = data;
+        break;
+      }
+    } catch (error) {
+      console.warn("Radio server failed:", server);
+    }
+  }
+
+  if (!stations) {
+    message("radioResultCount", "Radio ntizabonetse. Ongera ugerageze.");
+    $("radioGrid").innerHTML =
+      '<div class="empty">Radio directory is temporarily unavailable.</div>';
+    return;
+  }
+
+  state.radios = stations.filter(station =>
+    station.name &&
+    station.url_resolved &&
+    station.lastcheckok !== 0
+  );
+
+  $("totalRadio").textContent = state.radios.length;
+
+  populateRadioFilters();
+  renderRadio();
+
+  message(
+    "radioResultCount",
+    `${state.radios.length} radio stations found`
+  );
+}
+
   message("radioResultCount", "Loading radio stations...");
 
   try {
