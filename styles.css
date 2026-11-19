@@ -103,3 +103,147 @@ footer{border-top:1px solid var(--border);padding:24px 0;margin-top:45px;color:v
  .card-image{height:85px}.card-body{padding:9px}
  .radio-player audio{width:100%}
 }
+
+/* ITT-TV LAYOUT FIX */
+.app {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: 100vh;
+  width: 100%;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  width: 260px;
+  height: 100vh;
+  padding: 25px 14px;
+  background: #091727;
+  border-right: 1px solid rgba(255,255,255,.09);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+}
+
+.brand {
+  color: white;
+  margin-bottom: 35px;
+  padding: 10px;
+}
+
+.brand h2 {
+  font-size: 30px;
+  margin: 10px 0;
+}
+
+.brand small {
+  color: #9aabc1;
+}
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav {
+  width: 100%;
+  padding: 15px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #bdc9d8;
+  text-align: left;
+  font-size: 16px;
+}
+
+.nav.active,
+.nav:hover {
+  background: #183149;
+  color: #36d6c3;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 15px;
+  color: #36d6c3;
+}
+
+.main-content {
+  min-width: 0;
+  width: 100%;
+}
+
+.topbar {
+  height: 82px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 25px;
+  background: #091727;
+  border-bottom: 1px solid rgba(255,255,255,.09);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+#menuToggle {
+  padding: 10px 14px;
+  font-size: 22px;
+}
+
+.top-brand {
+  color: #36d6c3;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.page-content {
+  width: 100%;
+  max-width: 1600px;
+  margin: auto;
+  padding: 25px;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+.hero {
+  padding: 40px;
+  min-height: 260px;
+  border-radius: 16px;
+  background: linear-gradient(110deg, #12384b, #14253e);
+}
+
+.hero h1 {
+  font-size: 40px;
+  color: white;
+}
+
+@media(max-width: 850px) {
+  .app {
+    display: block;
+  }
+
+  .sidebar {
+    display: none;
+    position: fixed;
+    top: 82px;
+    left: 0;
+    width: 260px;
+    height: calc(100vh - 82px);
+  }
+
+  .sidebar.open {
+    display: flex;
+  }
+
+  .page-content {
+    padding: 15px;
+  }
+}
