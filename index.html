@@ -1,40 +1,53 @@
-
+```html
 <!DOCTYPE html>
 <html lang="rw">
 <head>
-  <title>ITT-TV | Rwanda TV, Radio, News, Sports and Movies</title>
-
-<meta name="description" content="ITT-TV brings together Rwanda and international television, radio, latest news, sports and movies in one place.">
-
-<meta name="keywords" content="ITT-TV, Rwanda TV, Rwanda Radio, Rwanda News, Live TV, Live Radio, Sports, Movies">
-
-<meta name="robots" content="index, follow">
-
-<link rel="canonical" href="https://pacifique21.github.io/ITT-TV/">
-
-<meta property="og:title" content="ITT-TV - Television, Radio and News">
-
-<meta property="og:description" content="Watch television, listen to radio and explore news, sports and movies on ITT-TV.">
-
-<meta property="og:url" content="https://pacifique21.github.io/ITT-TV/">
-
-<meta property="og:type" content="website">
-  <meta name="google-site-verification" content="gPEH1KBe-T4Cp2dFUVnd_hkIARGvy7Dloabp64adMtQ" />
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#08111f">
-  <meta name="description" content="ITT-TV — amakuru, siporo, televiziyo, radiyo na filime.">
-  <title>ITT-TV | World Media</title>
+
+  <!-- SEO -->
+  <title>ITT-TV | Rwanda TV, Radio, News, Sports & Movies</title>
+  <meta name="description" content="ITT-TV brings together Rwanda and international television, radio, latest news, sports and movies in one place.">
+  <meta name="keywords" content="ITT-TV, Rwanda TV, Rwanda Radio, Rwanda News, Live TV, Live Radio, Sports, Movies">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://pacifique21.github.io/ITT-TV/">
+
+  <!-- Google Search Console: KEEP THIS -->
+  <meta name="google-site-verification" content="gPEH1KBe-T4Cp2dFUVnd_hkIARGvy7Dloabp64adMtQ">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="ITT-TV - Television, Radio and News">
+  <meta property="og:description" content="Watch television, listen to radio and explore news, sports and movies on ITT-TV.">
+  <meta property="og:url" content="https://pacifique21.github.io/ITT-TV/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="ITT-TV">
+
+  <!-- Styles -->
   <link rel="stylesheet" href="styles.css">
+
+  <!-- Faster font connection -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+  <!-- HLS support -->
+  <script defer src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+
+  <!-- Title is defined once -->
 </head>
+
 <body>
+
 <header class="site-header">
-  <a class="brand" href="#home"><span>ITT</span><b>TV</b><small>WORLD MEDIA</small></a>
+  <a class="brand" href="#home">
+    <span>ITT</span><b>TV</b><small>WORLD MEDIA</small>
+  </a>
+
   <button class="menu-toggle" id="menuToggle" aria-label="Open menu">☰</button>
+
   <nav id="mainNav">
     <a href="#home">Home</a>
     <a href="#news">News</a>
@@ -44,6 +57,7 @@
     <a href="#movies">Movies</a>
     <a href="#about">About</a>
   </nav>
+
   <div class="header-tools">
     <select id="language" aria-label="Choose language">
       <option value="rw">Kinyarwanda</option>
@@ -68,34 +82,48 @@
 </div>
 
 <main>
+
+<!-- HOME -->
 <section class="hero" id="home">
   <div class="hero-content">
     <p class="eyebrow">YOUR WORLD. ONE PLATFORM.</p>
     <h1>AMAKURU<br><span>ADAHEMBWA.</span></h1>
     <p>Amakuru, siporo, televiziyo, radiyo na filime — byose ahantu hamwe.</p>
+
     <div class="hero-actions">
       <a class="btn btn-primary" href="#news">Reba amakuru</a>
       <a class="btn btn-ghost" href="#tv">Reba TV</a>
     </div>
   </div>
+
   <div class="hero-art">
     <div class="hero-circle">ITT</div>
     <span class="hero-caption">WORLD MEDIA</span>
   </div>
 </section>
 
+<!-- NEWS TICKER -->
 <section class="ticker">
   <strong>BREAKING</strong>
-  <div class="ticker-window"><div id="tickerTrack">Welcome to ITT-TV</div></div>
+  <div class="ticker-window">
+    <div id="tickerTrack">Welcome to ITT-TV</div>
+  </div>
 </section>
 
+<!-- NEWS -->
 <section class="section" id="news">
   <div class="section-heading">
-    <div><p class="eyebrow">01 / LATEST UPDATES</p><h2>Amakuru agezweho</h2></div>
+    <div>
+      <p class="eyebrow">01 / LATEST UPDATES</p>
+      <h2>Amakuru agezweho</h2>
+    </div>
+
     <button class="btn btn-outline" id="refreshNews">Refresh news ↻</button>
   </div>
+
   <div class="toolbar">
-    <input id="newsSearch" type="search" placeholder="Shaka amakuru...">
+    <input id="newsSearch" type="search" placeholder="Shaka amakuru..." aria-label="Search news">
+
     <div class="filter-list" id="newsFilters">
       <button class="filter-pill selected" data-category="all">Byose</button>
       <button class="filter-pill" data-category="Rwanda">Rwanda</button>
@@ -105,117 +133,226 @@
       <button class="filter-pill" data-category="Technology">Technology</button>
     </div>
   </div>
+
   <p class="status" id="newsStatus">Amakuru arimo gutegurwa...</p>
   <div class="news-grid" id="newsGrid"></div>
-  <button class="btn btn-outline centered hidden" id="loadMoreNews">Andi makuru</button>
+
+  <button class="btn btn-outline centered hidden" id="loadMoreNews">
+    Andi makuru
+  </button>
 </section>
 
+<!-- SPORTS -->
 <section class="section section-alt" id="sports">
   <div class="section-heading">
-    <div><p class="eyebrow">02 / SPORTS WORLD</p><h2>Siporo</h2></div>
+    <div>
+      <p class="eyebrow">02 / SPORTS WORLD</p>
+      <h2>Siporo</h2>
+    </div>
   </div>
+
   <p class="status" id="sportsStatus">Amakuru ya siporo azagaragara hano.</p>
   <div class="sports-grid" id="sportsList"></div>
+
   <div class="sports-links">
-    <a href="https://www.fifa.com/" target="_blank" rel="noopener">FIFA</a>
-    <a href="https://www.espn.com/" target="_blank" rel="noopener">ESPN</a>
-    <a href="https://www.bbc.com/sport" target="_blank" rel="noopener">BBC Sport</a>
+    <a href="https://www.fifa.com/" target="_blank" rel="noopener noreferrer">FIFA</a>
+    <a href="https://www.espn.com/" target="_blank" rel="noopener noreferrer">ESPN</a>
+    <a href="https://www.bbc.com/sport" target="_blank" rel="noopener noreferrer">BBC Sport</a>
   </div>
 </section>
 
+<!-- TELEVISION -->
 <section class="section" id="tv">
   <div class="section-heading">
-    <div><p class="eyebrow">03 / LIVE TELEVISION</p><h2>TV channels</h2></div>
+    <div>
+      <p class="eyebrow">03 / LIVE TELEVISION</p>
+      <h2>TV channels</h2>
+    </div>
+
     <span class="count" id="tvCount">Channels</span>
   </div>
+
   <div class="player-layout">
     <div class="player-main">
+
       <div class="screen">
         <video id="tvVideo" controls playsinline class="hidden"></video>
-        <iframe id="tvEmbed" class="hidden" title="TV official player"
+
+        <iframe
+          id="tvEmbed"
+          class="hidden"
+          title="TV official player"
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-          allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          allowfullscreen
+          referrerpolicy="strict-origin-when-cross-origin">
+        </iframe>
+
         <div class="screen-placeholder" id="tvPlaceholder">
           <div class="play-symbol">▶</div>
           <h3>ITT-TV Screen</h3>
           <p>Hitamo umuyoboro wa televiziyo kugira ngo ugerageze kuyirebera hano.</p>
         </div>
       </div>
+
       <div class="now-playing">
-        <div><span class="eyebrow">NOW SELECTED</span><h3 id="tvNowPlaying">Nta muyoboro wahiswemo</h3></div>
-        <a id="tvExternal" class="text-link hidden" href="#" target="_blank" rel="noopener">Official broadcaster ↗</a>
+        <div>
+          <span class="eyebrow">NOW SELECTED</span>
+          <h3 id="tvNowPlaying">Nta muyoboro wahiswemo</h3>
+        </div>
+
+        <a id="tvExternal"
+           class="text-link hidden"
+           href="#"
+           target="_blank"
+           rel="noopener noreferrer">
+          Official broadcaster ↗
+        </a>
       </div>
+
       <p class="status" id="tvMessage">Hitamo TV ushaka kureba.</p>
     </div>
+
     <aside class="player-sidebar">
       <h3>TV channels</h3>
-      <input id="tvSearch" type="search" placeholder="Shaka TV...">
-      <select id="tvCountry"><option value="all">Ibihugu byose</option></select>
-      <button class="btn btn-outline full" id="refreshTV">Refresh channels ↻</button>
+
+      <input id="tvSearch" type="search" placeholder="Shaka TV..." aria-label="Search TV channels">
+
+      <select id="tvCountry" aria-label="Filter TV by country">
+        <option value="all">Ibihugu byose</option>
+      </select>
+
+      <button class="btn btn-outline full" id="refreshTV">
+        Refresh channels ↻
+      </button>
+
       <div class="channel-list" id="tvList"></div>
     </aside>
   </div>
 </section>
 
+<!-- RADIO -->
 <section class="section section-alt" id="radio">
   <div class="section-heading">
-    <div><p class="eyebrow">04 / LIVE AUDIO</p><h2>Radio stations</h2></div>
+    <div>
+      <p class="eyebrow">04 / LIVE AUDIO</p>
+      <h2>Radio stations</h2>
+    </div>
+
     <span class="count" id="radioCount">Radio</span>
   </div>
+
   <div class="radio-player panel">
     <div class="radio-disc">♫</div>
+
     <div class="radio-info">
       <span class="eyebrow">NOW LISTENING</span>
       <h3 id="radioNowPlaying">Hitamo radiyo</h3>
       <p id="radioMeta">Radio player</p>
       <audio id="radioPlayer" controls preload="none"></audio>
     </div>
+
     <div id="ittRadioFrameWrap" class="radio-frame-wrap hidden"></div>
   </div>
+
   <p class="status" id="radioMessage">Hitamo radiyo ushaka kumva.</p>
+
   <div class="toolbar">
-    <input id="radioSearch" type="search" placeholder="Shaka radiyo...">
-    <select id="radioCountry"><option value="all">Ibihugu byose</option></select>
-    <button class="btn btn-outline" id="refreshRadios">Refresh radio ↻</button>
+    <input id="radioSearch" type="search" placeholder="Shaka radiyo..." aria-label="Search radio">
+
+    <select id="radioCountry" aria-label="Filter radio by country">
+      <option value="all">Ibihugu byose</option>
+    </select>
+
+    <button class="btn btn-outline" id="refreshRadios">
+      Refresh radio ↻
+    </button>
   </div>
+
   <div class="radio-grid" id="radioList"></div>
 </section>
 
+<!-- MOVIES -->
 <section class="section" id="movies">
   <div class="section-heading">
-    <div><p class="eyebrow">05 / CINEMA</p><h2>Movies & documentaries</h2></div>
-  </div>
-  <div class="movie-player-layout">
-    <div class="movie-screen">
-      <video id="moviePlayer" controls playsinline preload="metadata"></video>
-      <div class="screen-placeholder" id="moviePlaceholder">
-        <div class="play-symbol">▶</div><h3>Movie screen</h3>
-        <p>Hitamo filime iri hasi kugira ngo uyirebe.</p>
-      </div>
-      <div class="now-playing"><h3 id="movieNowPlaying">Nta filime wahisemo</h3></div>
-      <p class="status" id="movieMessage">Filime ziri hano ni izitangirwa ku mugaragaro.</p>
+    <div>
+      <p class="eyebrow">05 / CINEMA</p>
+      <h2>Movies & documentaries</h2>
     </div>
   </div>
+
+  <div class="movie-player-layout">
+    <div class="movie-screen">
+
+      <video id="moviePlayer" controls playsinline preload="metadata"></video>
+
+      <div class="screen-placeholder" id="moviePlaceholder">
+        <div class="play-symbol">▶</div>
+        <h3>Movie screen</h3>
+        <p>Hitamo filime iri hasi kugira ngo uyirebe.</p>
+      </div>
+
+      <div class="now-playing">
+        <h3 id="movieNowPlaying">Nta filime wahisemo</h3>
+      </div>
+
+      <p class="status" id="movieMessage">
+        Filime ziri hano ni izitangirwa ku mugaragaro.
+      </p>
+    </div>
+  </div>
+
   <div class="movie-grid" id="movieGrid"></div>
 </section>
 
+<!-- ABOUT -->
 <section class="section section-alt" id="about">
-  <div class="section-heading"><div><p class="eyebrow">06 / ABOUT US</p><h2>About ITT-TV</h2></div></div>
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">06 / ABOUT US</p>
+      <h2>About ITT-TV</h2>
+    </div>
+  </div>
+
   <div class="panel">
     <h3>ITT-TV — World Media</h3>
-    <p>Urubuga ruhuriza hamwe amakuru, siporo, televiziyo, radiyo n'amashusho atandukanye.</p>
-    <p>Indimi 12 ziri muri menu. Ibyo bihindura amagambo y'ibanze y'urubuga; ntibihita bihindura inyandiko z'amakuru yatangajwe n'ibitangazamakuru.</p>
-    <p>Stream na player bigenzurwa n'ababifite. Bimwe bishobora kutaboneka mu bihugu byose cyangwa bikabuza gushyirwa muri website.</p>
+
+    <p>
+      Urubuga ruhuriza hamwe amakuru, siporo, televiziyo,
+      radiyo n'amashusho atandukanye.
+    </p>
+
+    <p>
+      Indimi 12 ziri muri menu. Ibyo bihindura amagambo y'ibanze
+      y'urubuga; ntibihita bihindura inyandiko z'amakuru yatangajwe
+      n'ibitangazamakuru.
+    </p>
+
+    <p>
+      Stream na player bigenzurwa n'ababifite. Bimwe bishobora
+      kutaboneka mu bihugu byose cyangwa bikabuza gushyirwa muri website.
+    </p>
   </div>
 </section>
+
 </main>
 
+<!-- FOOTER -->
 <footer class="site-footer">
-  <a class="brand" href="#home"><span>ITT</span><b>TV</b><small>WORLD MEDIA</small></a>
+  <a class="brand" href="#home">
+    <span>ITT</span><b>TV</b><small>WORLD MEDIA</small>
+  </a>
+
   <p>© <span id="year"></span> ITT-TV. All rights reserved.</p>
+
   <a href="#home">Back to top ↑</a>
 </footer>
+
+<!-- TOAST -->
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<script src="app.js"></script>
+
+<!-- Main JavaScript -->
+<script defer src="app.js"></script>
+
 </body>
 </html>
+```
