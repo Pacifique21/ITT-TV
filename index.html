@@ -1,474 +1,948 @@
 
 <!DOCTYPE html>
-<html lang="rw">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>ITT-TV | Live TV, Radio & Movies</title>
+<title>ITT-TV | Live TV, Radio, Movies & Sports</title>
 
-  <meta name="description" content="ITT-TV, Rwanda and international television, radio, movies and live streaming.">
+<meta name="description" content="ITT-TV watch television, listen to radio and discover movies and sports from around the world.">
 
-  <meta name="theme-color" content="#07111f">
+<meta name="theme-color" content="#080b12">
 
-  <link rel="stylesheet" href="styles.css">
+<style>
+:root{
+  --bg:#080b12;
+  --panel:#111722;
+  --panel2:#172130;
+  --text:#f4f7fb;
+  --muted:#8e9aac;
+  --accent:#e50914;
+  --border:#222c3b;
+}
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,Helvetica,sans-serif;
+  min-height:100vh;
+}
+
+button,input,select{
+  font:inherit;
+}
+
+button{
+  cursor:pointer;
+  border:none;
+}
+
+a{
+  color:inherit;
+  text-decoration:none;
+}
+
+.topbar{
+  height:70px;
+  position:sticky;
+  top:0;
+  z-index:100;
+  background:rgba(8,11,18,.97);
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 25px;
+  gap:20px;
+}
+
+.logo{
+  font-size:27px;
+  font-weight:900;
+  letter-spacing:1px;
+  color:white;
+  white-space:nowrap;
+}
+
+.logo span{
+  color:var(--accent);
+}
+
+.searchbox{
+  flex:1;
+  max-width:520px;
+}
+
+.searchbox input{
+  width:100%;
+  background:#151c28;
+  border:1px solid #2b3545;
+  padding:13px 18px;
+  border-radius:30px;
+  color:white;
+  outline:none;
+}
+
+.searchbox input:focus{
+  border-color:var(--accent);
+}
+
+.menuToggle{
+  display:none;
+  font-size:23px;
+  background:transparent;
+  color:white;
+}
+
+.layout{
+  display:flex;
+  min-height:calc(100vh - 70px);
+}
+
+.sidebar{
+  width:230px;
+  flex-shrink:0;
+  background:#0d121b;
+  border-right:1px solid var(--border);
+  padding:22px 14px;
+  position:sticky;
+  top:70px;
+  height:calc(100vh - 70px);
+  overflow-y:auto;
+}
+
+.sidebar h4{
+  color:var(--muted);
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  padding:12px;
+}
+
+.navbtn{
+  width:100%;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  padding:13px;
+  border-radius:10px;
+  color:#c7d0de;
+  background:transparent;
+  margin-bottom:5px;
+  text-align:left;
+  font-size:14px;
+  transition:.2s;
+}
+
+.navbtn:hover,.navbtn.active{
+  background:#202a39;
+  color:white;
+}
+
+.navbtn.active{
+  border-left:3px solid var(--accent);
+}
+
+.main{
+  flex:1;
+  min-width:0;
+  padding:24px;
+}
+
+.page{
+  display:none;
+}
+
+.page.active{
+  display:block;
+}
+
+.hero{
+  min-height:270px;
+  border-radius:20px;
+  background:
+    linear-gradient(90deg,rgba(5,8,13,.97),rgba(5,8,13,.5)),
+    url("https://images.unsplash.com/photo-1593784991095-a7d4f3b5d7a4?auto=format&fit=crop&w=1600&q=80");
+  background-size:cover;
+  background-position:center;
+  display:flex;
+  align-items:center;
+  padding:40px;
+  margin-bottom:30px;
+  border:1px solid #293344;
+}
+
+.hero-content{
+  max-width:650px;
+}
+
+.hero-badge{
+  color:#ff5d65;
+  font-size:12px;
+  font-weight:bold;
+  letter-spacing:2px;
+  margin-bottom:15px;
+}
+
+.hero h1{
+  font-size:clamp(30px,5vw,56px);
+  font-weight:900;
+  margin-bottom:15px;
+}
+
+.hero p{
+  color:#c2ccda;
+  line-height:1.7;
+  margin-bottom:20px;
+}
+
+.primary-btn{
+  background:var(--accent);
+  color:white;
+  border-radius:8px;
+  padding:13px 22px;
+  font-weight:bold;
+}
+
+.primary-btn:hover{
+  background:#bb0710;
+}
+
+.section-title{
+  font-size:23px;
+  font-weight:800;
+  margin-bottom:10px;
+}
+
+.section-sub{
+  color:var(--muted);
+  margin-bottom:22px;
+  font-size:14px;
+}
+
+.player-panel{
+  background:#000;
+  border:1px solid #263142;
+  border-radius:16px;
+  overflow:hidden;
+  margin-bottom:28px;
+}
+
+.player-panel video{
+  display:block;
+  width:100%;
+  max-height:72vh;
+  aspect-ratio:16/9;
+  background:#000;
+}
+
+.player-info{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  padding:15px 18px;
+  gap:10px;
+  background:#101722;
+}
+
+.player-info h3{
+  font-size:17px;
+}
+
+.live-badge{
+  color:#ff4b56;
+  font-weight:bold;
+  font-size:12px;
+}
+
+.toolbar{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:22px;
+}
+
+.toolbar input,.toolbar select{
+  background:#151d29;
+  color:white;
+  border:1px solid #2b3748;
+  border-radius:9px;
+  padding:12px;
+  outline:none;
+}
+
+.toolbar input{
+  flex:1;
+  min-width:160px;
+}
+
+.toolbar select{
+  min-width:145px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(165px,1fr));
+  gap:18px;
+}
+
+.itt-card{
+  background:var(--panel);
+  border:1px solid #222d3b;
+  border-radius:13px;
+  overflow:hidden;
+  transition:transform .2s,border .2s;
+}
+
+.itt-card:hover{
+  transform:translateY(-4px);
+  border-color:#45556b;
+}
+
+.itt-card-image{
+  position:relative;
+  background:#182230;
+  aspect-ratio:16/9;
+  overflow:hidden;
+}
+
+.itt-card-image img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.itt-fav{
+  position:absolute;
+  top:9px;
+  right:9px;
+  background:rgba(0,0,0,.75);
+  color:white;
+  font-size:23px;
+  border-radius:50%;
+  width:35px;
+  height:35px;
+}
+
+.itt-card-body{
+  padding:13px;
+}
+
+.itt-card-body h3{
+  font-size:14px;
+  margin-bottom:7px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.itt-card-body p{
+  color:var(--muted);
+  font-size:12px;
+  height:18px;
+  overflow:hidden;
+  margin-bottom:12px;
+}
+
+.itt-play{
+  width:100%;
+  background:#253247;
+  color:white;
+  border-radius:7px;
+  padding:10px;
+  font-weight:bold;
+}
+
+.itt-play:hover{
+  background:var(--accent);
+}
+
+.itt-empty{
+  color:var(--muted);
+  padding:25px;
+}
+
+.more-btn{
+  display:block;
+  margin:28px auto;
+  background:#202b3a;
+  color:white;
+  padding:13px 24px;
+  border-radius:9px;
+}
+
+.more-btn:hover{
+  background:#34445c;
+}
+
+.message{
+  color:#a5b3c6;
+  font-size:13px;
+  margin:12px 0;
+}
+
+.radio-player{
+  width:100%;
+  background:#111a27;
+  border:1px solid #293647;
+  border-radius:12px;
+  padding:18px;
+  margin-bottom:25px;
+}
+
+.radio-player audio{
+  width:100%;
+}
+
+.movie-player{
+  margin-bottom:25px;
+}
+
+.feature-card{
+  padding:24px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:15px;
+  margin-bottom:22px;
+}
+
+.feature-card h3{
+  margin-bottom:10px;
+}
+
+.feature-card p{
+  color:var(--muted);
+  line-height:1.7;
+}
+
+.footer{
+  text-align:center;
+  border-top:1px solid var(--border);
+  padding:30px 15px;
+  margin-top:50px;
+  color:#7f8ca1;
+  font-size:13px;
+}
+
+.footer strong{
+  color:white;
+}
+
+@media(max-width:900px){
+  .sidebar{
+    width:200px;
+  }
+
+  .main{
+    padding:18px;
+  }
+
+  .grid{
+    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+    gap:13px;
+  }
+}
+
+@media(max-width:650px){
+  .topbar{
+    padding:0 14px;
+    height:60px;
+  }
+
+  .logo{
+    font-size:22px;
+  }
+
+  .menuToggle{
+    display:block;
+  }
+
+  .searchbox{
+    max-width:none;
+  }
+
+  .searchbox input{
+    padding:10px 12px;
+    font-size:12px;
+  }
+
+  .layout{
+    min-height:calc(100vh - 60px);
+  }
+
+  .sidebar{
+    position:fixed;
+    left:-260px;
+    top:60px;
+    z-index:120;
+    height:calc(100vh - 60px);
+    width:250px;
+    transition:left .25s;
+    box-shadow:10px 0 30px rgba(0,0,0,.4);
+  }
+
+  .sidebar.open{
+    left:0;
+  }
+
+  .main{
+    padding:13px;
+    width:100%;
+  }
+
+  .hero{
+    min-height:230px;
+    padding:25px;
+    border-radius:14px;
+  }
+
+  .hero h1{
+    font-size:31px;
+  }
+
+  .section-title{
+    font-size:20px;
+  }
+
+  .grid{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:12px;
+  }
+
+  .itt-card-body{
+    padding:10px;
+  }
+
+  .player-panel video{
+    max-height:none;
+  }
+
+  .toolbar select{
+    flex:1;
+  }
+}
+
+@media(min-width:1200px){
+  .main{
+    padding:32px;
+  }
+
+  .grid{
+    grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  }
+}
+</style>
 </head>
 
 <body>
 
-<div class="app">
+<!-- TOP BAR -->
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar" id="sidebar">
+<header class="topbar">
 
-    <div class="brand">
-      <div class="brand-icon">ITT</div>
-      <div>
-        <h2>ITT-TV</h2>
-        <small>Watch the world</small>
-      </div>
+  <button class="menuToggle" id="menuToggle">☰</button>
+
+  <a href="#" class="logo">ITT<span>-TV</span></a>
+
+  <div class="searchbox">
+    <input id="globalSearch"
+      type="search"
+      placeholder="Search TV, radio, movies...">
+  </div>
+
+</header>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar" id="sidebar">
+
+  <h4>Discover</h4>
+
+  <button class="navbtn active" data-page="tv">
+    📺 Live Television
+  </button>
+
+  <button class="navbtn" data-page="radio">
+    📻 Radio Stations
+  </button>
+
+  <button class="navbtn" data-page="movies">
+    🎬 Movies
+  </button>
+
+  <button class="navbtn" data-page="sports">
+    ⚽ Sports
+  </button>
+
+  <h4>Your Library</h4>
+
+  <button class="navbtn" data-page="favorites">
+    ♥ Favorites
+  </button>
+
+  <button class="navbtn" data-page="recent">
+    🕘 Recently Watched
+  </button>
+
+  <div class="feature-card" style="margin-top:25px">
+    <h3>ITT-TV</h3>
+    <p>Entertainment, television, radio and movies in one place.</p>
+  </div>
+
+</aside>
+
+<!-- MAIN CONTENT -->
+
+<main class="main">
+
+<!-- =================================================
+     TV PAGE
+================================================= -->
+
+<section class="page active" id="tvPage">
+
+  <div class="hero">
+    <div class="hero-content">
+
+      <div class="hero-badge">LIVE ENTERTAINMENT</div>
+
+      <h1>Watch Live TV</h1>
+
+      <p>
+        Discover television channels from Rwanda and around the world.
+        Watch news, entertainment, sports and more.
+      </p>
+
+      <button class="primary-btn"
+        onclick="document.getElementById('tvGrid').scrollIntoView({behavior:'smooth'})">
+        Explore Channels
+      </button>
+
+    </div>
+  </div>
+
+  <h2 class="section-title">Live Player</h2>
+
+  <p class="section-sub">
+    Select a channel below to start watching.
+  </p>
+
+  <div class="player-panel" id="tvPlayerPanel">
+
+    <video id="tvVideo"
+      controls
+      autoplay
+      playsinline
+      preload="metadata">
+    </video>
+
+    <div class="player-info">
+      <h3 id="tvNowPlaying">Select a TV channel</h3>
+      <span class="live-badge">● LIVE</span>
     </div>
 
-    <nav class="navigation">
+  </div>
 
-      <button class="nav-btn active" data-page="home">
-        <span>⌂</span> Home
-      </button>
+  <p class="message" id="tvMessage">Loading channels...</p>
 
-      <button class="nav-btn" data-page="tv">
-        <span>▣</span> Live TV
-      </button>
+  <div class="toolbar">
 
-      <button class="nav-btn" data-page="radio">
-        <span>♫</span> Radio
-      </button>
+    <input id="tvSearch"
+      type="search"
+      placeholder="Search TV channels...">
 
-      <button class="nav-btn" data-page="movies">
-        <span>🎬</span> Movies
-      </button>
+    <select id="tvCountry">
+      <option value="">All Countries</option>
+    </select>
 
-      <button class="nav-btn" data-page="favorites">
-        <span>★</span> Favorites
-      </button>
+    <select id="tvCategory">
+      <option value="">All Categories</option>
+    </select>
 
-      <button class="nav-btn" data-page="recent">
-        <span>◷</span> Recently Watched
-      </button>
+    <select id="tvSort">
+      <option value="">Default order</option>
+      <option value="name">Sort by name</option>
+    </select>
 
-    </nav>
+  </div>
 
-    <div class="sidebar-footer">
-      <span class="live-dot"></span>
-      ITT-TV Streaming
+  <h2 class="section-title">All TV Channels</h2>
+
+  <div class="grid" id="tvGrid"></div>
+
+  <button class="more-btn" id="moreChannels">
+    Load More Channels
+  </button>
+
+  <h2 class="section-title">Movie TV Channels</h2>
+
+  <div class="grid" id="movieChannelsGrid"></div>
+
+</section>
+
+<!-- =================================================
+     RADIO PAGE
+================================================= -->
+
+<section class="page" id="radioPage">
+
+  <div class="hero">
+    <div class="hero-content">
+
+      <div class="hero-badge">LISTEN LIVE</div>
+
+      <h1>Radio Everywhere</h1>
+
+      <p>
+        Listen to radio stations from Rwanda and countries around the world.
+        Music, news, talk shows and more.
+      </p>
+
+    </div>
+  </div>
+
+  <h2 class="section-title">Radio Player</h2>
+
+  <div class="radio-player">
+
+    <h3 id="radioNowPlaying">Select a radio station</h3>
+
+    <p class="message">
+      Live radio audio player
+    </p>
+
+    <audio id="radioPlayer"
+      controls
+      autoplay
+      preload="none">
+    </audio>
+
+  </div>
+
+  <p class="message" id="radioMessage">
+    Loading radio stations...
+  </p>
+
+  <div class="toolbar">
+
+    <input id="radioSearch"
+      type="search"
+      placeholder="Search radio...">
+
+    <select id="radioCountry">
+      <option value="">All Countries</option>
+    </select>
+
+    <select id="radioLanguage">
+      <option value="">All Languages</option>
+    </select>
+
+  </div>
+
+  <h2 class="section-title">Radio Stations</h2>
+
+  <div class="grid" id="radioGrid"></div>
+
+  <button class="more-btn" id="moreRadio">
+    Load More Radio
+  </button>
+
+</section>
+
+<!-- =================================================
+     MOVIES PAGE
+================================================= -->
+
+<section class="page" id="moviesPage">
+
+  <div class="hero">
+    <div class="hero-content">
+
+      <div class="hero-badge">MOVIE COLLECTION</div>
+
+      <h1>Movies & Cinema</h1>
+
+      <p>
+        Explore movie collections and discover films available
+        through public archives and authorized sources.
+      </p>
+
+    </div>
+  </div>
+
+  <h2 class="section-title">Movie Player</h2>
+
+  <div class="player-panel movie-player" id="moviePlayerPanel">
+
+    <video id="movieVideo"
+      controls
+      playsinline
+      preload="metadata">
+    </video>
+
+    <div class="player-info">
+      <h3 id="movieNowPlaying">Select a movie</h3>
     </div>
 
-  </aside>
+  </div>
+
+  <p class="message" id="movieMessage">
+    Search movies below.
+  </p>
+
+  <div class="toolbar">
+
+    <input id="movieSearch"
+      type="search"
+      placeholder="Search movies by title...">
+
+  </div>
+
+  <h2 class="section-title">Movie Collection</h2>
+
+  <p class="section-sub">
+    Movie availability depends on the source and playback rights.
+  </p>
+
+  <div class="grid" id="movieGrid"></div>
+
+  <button class="more-btn" id="moreMovies">
+    Load More Movies
+  </button>
+
+</section>
 
-  <!-- MAIN -->
-  <main class="main">
+<!-- =================================================
+     SPORTS PAGE
+================================================= -->
 
-    <header class="topbar">
+<section class="page" id="sportsPage">
 
-      <button id="menuToggle" class="icon-button">☰</button>
+  <div class="hero">
+    <div class="hero-content">
 
-      <div class="brand-mobile">ITT-TV</div>
+      <div class="hero-badge">SPORTS WORLD</div>
 
-      <div class="search-box">
-        <span>⌕</span>
-        <input id="globalSearch" type="search"
-               placeholder="Search TV, radio, movies...">
-      </div>
+      <h1>Sports</h1>
 
-      <div class="top-live">
-        <span class="live-dot"></span>
-        LIVE
-      </div>
+      <p>
+        Discover sports coverage, football news, sports television
+        and live events through official broadcasters.
+      </p>
 
-    </header>
+    </div>
+  </div>
 
-    <!-- HOME -->
-    <section class="page active" id="homePage">
+  <div class="feature-card">
+    <h2>⚽ Football</h2>
+    <p>
+      Follow football competitions, teams, results and news
+      from official sports providers.
+    </p>
+    <br>
+    <a href="https://www.fifa.com/"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="primary-btn">
+      FIFA
+    </a>
+  </div>
 
-      <section class="hero">
+  <div class="feature-card">
+    <h2>🏀 Basketball</h2>
+    <p>Explore basketball news and official league coverage.</p>
+    <br>
+    <a href="https://www.nba.com/"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="primary-btn">
+      NBA
+    </a>
+  </div>
 
-        <div class="hero-globe-wrap">
-          <div class="globe">
-            <div class="globe-map"></div>
-            <div class="globe-grid"></div>
-          </div>
-          <div class="globe-shadow"></div>
-        </div>
+  <div class="feature-card">
+    <h2>🏆 Sports News</h2>
+    <p>Discover sports news and highlights.</p>
+    <br>
+    <a href="https://www.espn.com/"
+       target="_blank"
+       rel="noopener noreferrer"
+       class="primary-btn">
+      ESPN
+    </a>
+  </div>
 
-        <div class="hero-content">
+</section>
 
-          <div class="hero-tag">
-            <span class="live-dot"></span>
-            YOUR WORLD OF ENTERTAINMENT
-          </div>
+<!-- =================================================
+     FAVORITES
+================================================= -->
 
-          <h1>Watch the<br><span>World Live.</span></h1>
+<section class="page" id="favoritesPage">
 
-          <p>
-            Television, radio, movies and channels from Rwanda
-            and around the world — in one place.
-          </p>
+  <div class="hero">
+    <div class="hero-content">
+      <h1>My Favorites</h1>
+      <p>Your saved TV channels, radio stations and movies.</p>
+    </div>
+  </div>
 
-          <div class="hero-buttons">
+  <div class="grid" id="favoritesGrid"></div>
 
-            <button class="primary-button" data-page="tv">
-              ▶ Explore Live TV
-            </button>
+</section>
 
-            <button class="secondary-button" data-page="radio">
-              ♫ Listen to Radio
-            </button>
+<!-- =================================================
+     RECENT
+================================================= -->
 
-          </div>
+<section class="page" id="recentPage">
 
-        </div>
+  <div class="hero">
+    <div class="hero-content">
+      <h1>Recently Watched</h1>
+      <p>Quickly return to what you recently watched or listened to.</p>
+    </div>
+  </div>
 
-      </section>
+  <div class="grid" id="recentGrid"></div>
 
-      <!-- GLOBE BACKGROUND -->
-      <section class="world-section">
+</section>
 
-        <div class="world-globe-background">
-          <div class="globe globe-small">
-            <div class="globe-map"></div>
-            <div class="globe-grid"></div>
-          </div>
-        </div>
+<!-- FOOTER -->
 
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">EXPLORE</span>
-            <h2>Your World</h2>
-          </div>
-        </div>
+<footer class="footer">
 
-        <div class="stats-grid">
+  <strong>ITT-TV</strong>
 
-          <div class="stat-card">
-            <span class="stat-icon">📺</span>
-            <div>
-              <strong id="totalTV">0</strong>
-              <small>TV Channels</small>
-            </div>
-          </div>
+  <p style="margin-top:10px">
+    TV · Radio · Movies · Sports
+  </p>
 
-          <div class="stat-card">
-            <span class="stat-icon">📻</span>
-            <div>
-              <strong id="totalRadio">0</strong>
-              <small>Radio Stations</small>
-            </div>
-          </div>
+  <p style="margin-top:8px">
+    © <span id="year"></span> ITT-TV
+  </p>
 
-          <div class="stat-card">
-            <span class="stat-icon">🎬</span>
-            <div>
-              <strong id="totalMovies">0</strong>
-              <small>Movie Channels</small>
-            </div>
-          </div>
+</footer>
 
-        </div>
-
-      </section>
-
-      <!-- FEATURED TV -->
-      <section class="content-section">
-
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">WATCH NOW</span>
-            <h2>Featured TV Channels</h2>
-          </div>
-
-          <button class="text-button" data-page="tv">View all →</button>
-        </div>
-
-        <div class="media-grid" id="featuredChannels"></div>
-
-      </section>
-
-      <!-- RECENT -->
-      <section class="content-section">
-
-        <div class="section-heading">
-          <div>
-            <span class="eyebrow">CONTINUE</span>
-            <h2>Recently Watched</h2>
-          </div>
-
-          <button class="text-button" data-page="recent">View all →</button>
-        </div>
-
-        <div class="media-grid" id="homeRecent"></div>
-
-      </section>
-
-    </section>
-
-    <!-- TV PAGE -->
-    <section class="page" id="tvPage">
-
-      <section class="page-header">
-
-        <div>
-          <span class="eyebrow">LIVE STREAMING</span>
-          <h1>Live TV</h1>
-          <p>Explore television from Rwanda and the rest of the world.</p>
-        </div>
-
-        <div class="page-globe">
-          <div class="globe globe-mini">
-            <div class="globe-map"></div>
-            <div class="globe-grid"></div>
-          </div>
-        </div>
-
-      </section>
-
-      <!-- PLAYER -->
-      <section class="player-panel">
-
-        <div class="player-screen">
-
-          <div id="tvPlaceholder" class="player-placeholder">
-            <div class="placeholder-icon">▶</div>
-            <h2>Select a TV channel</h2>
-            <p>Choose a channel below to begin watching.</p>
-          </div>
-
-          <video id="tvVideo"
-                 controls
-                 playsinline
-                 autoplay
-                 style="display:none">
-          </video>
-
-        </div>
-
-        <div class="player-info">
-
-          <div class="player-title">
-            <span class="live-badge"><span class="live-dot"></span> LIVE</span>
-            <h3 id="tvNowPlaying">No channel selected</h3>
-            <p id="tvMessage">Choose a channel to play.</p>
-          </div>
-
-          <button id="playerFavorite" class="favorite-player" title="Favorite">☆</button>
-
-        </div>
-
-      </section>
-
-      <!-- FILTERS -->
-      <section class="filter-section">
-
-        <div class="filter-search">
-          <span>⌕</span>
-          <input id="tvSearch" type="search" placeholder="Search TV channels">
-        </div>
-
-        <select id="tvCountry">
-          <option value="">All countries</option>
-        </select>
-
-        <select id="tvCategory">
-          <option value="">All categories</option>
-        </select>
-
-        <select id="tvSort">
-          <option value="name">Sort by name</option>
-          <option value="country">Sort by country</option>
-        </select>
-
-      </section>
-
-      <div class="section-heading compact">
-        <h2>Channels</h2>
-        <span id="tvResultCount" class="result-count">0 channels</span>
-      </div>
-
-      <div id="tvGrid" class="media-grid"></div>
-
-      <button id="moreChannels" class="load-more" style="display:none">
-        Load More Channels
-      </button>
-
-    </section>
-
-    <!-- RADIO PAGE -->
-    <section class="page" id="radioPage">
-
-      <section class="page-header">
-
-        <div>
-          <span class="eyebrow">LIVE AUDIO</span>
-          <h1>Radio Stations</h1>
-          <p>Listen to stations from Rwanda and around the world.</p>
-        </div>
-
-      </section>
-
-      <section class="radio-player-panel">
-
-        <div class="radio-art">♫</div>
-
-        <div class="radio-player-content">
-
-          <div class="live-badge">
-            <span class="live-dot"></span> ON AIR
-          </div>
-
-          <h2 id="radioNowPlaying">Choose a radio station</h2>
-          <p id="radioDetails">Rwanda and International Radio</p>
-
-          <audio id="radioPlayer" controls style="width:100%"></audio>
-
-        </div>
-
-      </section>
-
-      <section class="filter-section">
-
-        <div class="filter-search">
-          <span>⌕</span>
-          <input id="radioSearch" type="search" placeholder="Search radio stations">
-        </div>
-
-        <select id="radioCountry">
-          <option value="">All countries</option>
-        </select>
-
-        <select id="radioLanguage">
-          <option value="">All languages</option>
-        </select>
-
-      </section>
-
-      <div class="section-heading compact">
-        <h2>Radio Stations</h2>
-        <span id="radioResultCount" class="result-count">0 stations</span>
-      </div>
-
-      <div id="radioGrid" class="media-grid"></div>
-
-      <button id="moreRadio" class="load-more" style="display:none">
-        Load More Stations
-      </button>
-
-    </section>
-
-    <!-- MOVIES PAGE -->
-    <section class="page" id="moviesPage">
-
-      <section class="page-header">
-
-        <div>
-          <span class="eyebrow">ENTERTAINMENT</span>
-          <h1>Movies</h1>
-          <p>Discover movie channels and films.</p>
-        </div>
-
-      </section>
-
-      <section class="player-panel" id="moviePlayerPanel" style="display:none">
-
-        <div class="player-screen">
-
-          <video id="movieVideo"
-                 controls
-                 playsinline
-                 style="display:none">
-          </video>
-
-        </div>
-
-        <div class="player-info">
-          <div class="player-title">
-            <h3 id="movieNowPlaying">Movie</h3>
-            <p id="movieMessage">Select a movie.</p>
-          </div>
-        </div>
-
-      </section>
-
-      <div class="section-heading compact">
-        <h2>Movie Channels</h2>
-        <span id="movieChannelsMessage" class="result-count">Loading...</span>
-      </div>
-
-      <div id="movieChannelsGrid" class="media-grid"></div>
-
-      <div class="section-heading compact movie-heading">
-        <h2>Movie Library</h2>
-        <span id="movieResultCount" class="result-count">0 movies</span>
-      </div>
-
-      <section class="filter-section">
-
-        <div class="filter-search">
-          <span>⌕</span>
-          <input id="movieSearch" type="search" placeholder="Search movies">
-        </div>
-
-        <button id="searchMovies" class="primary-button">Search</button>
-
-      </section>
-
-      <div id="movieGrid" class="media-grid"></div>
-
-      <button id="moreMovies" class="load-more" style="display:none">
-        Load More Movies
-      </button>
-
-    </section>
-
-    <!-- FAVORITES -->
-    <section class="page" id="favoritesPage">
-
-      <section class="page-header">
-        <div>
-          <span class="eyebrow">YOUR COLLECTION</span>
-          <h1>Favorites ★</h1>
-          <p>Your favorite channels, radio stations and movies.</p>
-        </div>
-      </section>
-
-      <div id="favoritesGrid" class="media-grid"></div>
-
-    </section>
-
-    <!-- RECENT -->
-    <section class="page" id="recentPage">
-
-      <section class="page-header">
-        <div>
-          <span class="eyebrow">YOUR HISTORY</span>
-          <h1>Recently Watched</h1>
-          <p>Continue with your recent channels and media.</p>
-        </div>
-      </section>
-
-      <div id="recentGrid" class="media-grid"></div>
-
-    </section>
-
-    <!-- FOOTER -->
-    <footer class="footer">
-      <div class="footer-brand">ITT-TV</div>
-      <p>Explore entertainment from around the world.</p>
-      <p>© <span id="year"></span> ITT-TV</p>
-    </footer>
-
-  </main>
-
+</main>
 </div>
 
-<div id="toast" class="toast"></div>
+<!-- HLS SUPPORT -->
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<!-- ITT-TV APP -->
 
 <script src="app.js"></script>
 
