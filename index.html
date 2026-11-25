@@ -4,540 +4,433 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#07111f">
+<meta name="description" content="ITT-TV - Rwanda and international live television and radio streaming platform.">
+<title>ITT-TV | Live Television & Radio</title>
 
-<title>ITT-TV | Live TV, Radio, Movies & Sports</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-<meta name="description" content="ITT-TV watch television, listen to radio and discover movies and sports from around the world.">
+<link rel="stylesheet" href="styles.css">
 
-<meta name="theme-color" content="#080b12">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-:root{
-  --bg:#080b12;
-  --panel:#111722;
-  --panel2:#172130;
-  --text:#f4f7fb;
-  --muted:#8e9aac;
-  --accent:#e50914;
-  --border:#222c3b;
+:root {
+  --bg: #07111f;
+  --panel: #101e30;
+  --panel2: #16283d;
+  --text: #f5f8ff;
+  --muted: #9eafc4;
+  --accent: #24d9a2;
+  --border: rgba(255,255,255,.09);
 }
 
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
+* {
+  box-sizing: border-box;
 }
 
-body{
-  background:var(--bg);
-  color:var(--text);
-  font-family:Arial,Helvetica,sans-serif;
-  min-height:100vh;
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, Arial, sans-serif;
 }
 
-button,input,select{
-  font:inherit;
+button, input, select {
+  font: inherit;
 }
 
-button{
-  cursor:pointer;
-  border:none;
+button {
+  cursor: pointer;
 }
 
-a{
-  color:inherit;
-  text-decoration:none;
+.topbar {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 0 24px;
+  background: #0a1727;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-.topbar{
-  height:70px;
-  position:sticky;
-  top:0;
-  z-index:100;
-  background:rgba(8,11,18,.97);
-  border-bottom:1px solid var(--border);
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 25px;
-  gap:20px;
+.brand {
+  color: var(--accent);
+  font-size: 25px;
+  font-weight: 900;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.logo{
-  font-size:27px;
-  font-weight:900;
-  letter-spacing:1px;
-  color:white;
-  white-space:nowrap;
+.topbar input {
+  max-width: 500px;
+  width: 100%;
+  margin-left: auto;
+  padding: 13px 17px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: white;
+  outline: none;
 }
 
-.logo span{
-  color:var(--accent);
+#menuToggle {
+  color: white;
+  background: transparent;
+  border: 0;
+  font-size: 25px;
 }
 
-.searchbox{
-  flex:1;
-  max-width:520px;
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 72px;
+  bottom: 0;
+  width: 245px;
+  background: #0a1727;
+  border-right: 1px solid var(--border);
+  padding: 24px 15px;
+  overflow-y: auto;
+  z-index: 90;
 }
 
-.searchbox input{
-  width:100%;
-  background:#151c28;
-  border:1px solid #2b3545;
-  padding:13px 18px;
-  border-radius:30px;
-  color:white;
-  outline:none;
+.sidebar h2 {
+  padding: 0 12px;
+  color: var(--accent);
 }
 
-.searchbox input:focus{
-  border-color:var(--accent);
+.sidebar button {
+  width: 100%;
+  display: block;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 15px;
+  border-radius: 11px;
+  margin: 4px 0;
 }
 
-.menuToggle{
-  display:none;
-  font-size:23px;
-  background:transparent;
-  color:white;
+.sidebar button:hover,
+.sidebar button.active {
+  background: var(--panel2);
+  color: var(--accent);
 }
 
-.layout{
-  display:flex;
-  min-height:calc(100vh - 70px);
+.main-content {
+  margin-left: 245px;
+  padding: 28px;
+  min-height: 100vh;
 }
 
-.sidebar{
-  width:230px;
-  flex-shrink:0;
-  background:#0d121b;
-  border-right:1px solid var(--border);
-  padding:22px 14px;
-  position:sticky;
-  top:70px;
-  height:calc(100vh - 70px);
-  overflow-y:auto;
+.page {
+  display: none;
 }
 
-.sidebar h4{
-  color:var(--muted);
-  font-size:11px;
-  text-transform:uppercase;
-  letter-spacing:1.5px;
-  padding:12px;
+.page.active {
+  display: block;
 }
 
-.navbtn{
-  width:100%;
-  display:flex;
-  gap:12px;
-  align-items:center;
-  padding:13px;
-  border-radius:10px;
-  color:#c7d0de;
-  background:transparent;
-  margin-bottom:5px;
-  text-align:left;
-  font-size:14px;
-  transition:.2s;
-}
-
-.navbtn:hover,.navbtn.active{
-  background:#202a39;
-  color:white;
-}
-
-.navbtn.active{
-  border-left:3px solid var(--accent);
-}
-
-.main{
-  flex:1;
-  min-width:0;
-  padding:24px;
-}
-
-.page{
-  display:none;
-}
-
-.page.active{
-  display:block;
-}
-
-.hero{
-  min-height:270px;
-  border-radius:20px;
+.hero {
   background:
-    linear-gradient(90deg,rgba(5,8,13,.97),rgba(5,8,13,.5)),
-    url("https://images.unsplash.com/photo-1593784991095-a7d4f3b5d7a4?auto=format&fit=crop&w=1600&q=80");
-  background-size:cover;
-  background-position:center;
-  display:flex;
-  align-items:center;
-  padding:40px;
-  margin-bottom:30px;
-  border:1px solid #293344;
+    radial-gradient(circle at 80% 20%, #176d65, transparent 35%),
+    linear-gradient(120deg, #142a43, #07111f);
+  border: 1px solid var(--border);
+  padding: 50px 35px;
+  border-radius: 22px;
+  margin-bottom: 28px;
 }
 
-.hero-content{
-  max-width:650px;
+.hero h1 {
+  font-size: clamp(30px, 5vw, 55px);
+  margin: 0 0 15px;
 }
 
-.hero-badge{
-  color:#ff5d65;
-  font-size:12px;
-  font-weight:bold;
-  letter-spacing:2px;
-  margin-bottom:15px;
+.hero p {
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 650px;
 }
 
-.hero h1{
-  font-size:clamp(30px,5vw,56px);
-  font-weight:900;
-  margin-bottom:15px;
+.hero button {
+  background: var(--accent);
+  color: #041b19;
+  padding: 13px 22px;
+  border: 0;
+  border-radius: 10px;
+  font-weight: 800;
+  margin: 10px 8px 0 0;
 }
 
-.hero p{
-  color:#c2ccda;
-  line-height:1.7;
-  margin-bottom:20px;
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin: 24px 0 35px;
 }
 
-.primary-btn{
-  background:var(--accent);
-  color:white;
-  border-radius:8px;
-  padding:13px 22px;
-  font-weight:bold;
+.stats div {
+  padding: 22px;
+  border-radius: 15px;
+  background: var(--panel);
+  border: 1px solid var(--border);
 }
 
-.primary-btn:hover{
-  background:#bb0710;
+.stats strong {
+  display: block;
+  font-size: 30px;
+  color: var(--accent);
 }
 
-.section-title{
-  font-size:23px;
-  font-weight:800;
-  margin-bottom:10px;
+.stats span {
+  color: var(--muted);
+  font-size: 13px;
 }
 
-.section-sub{
-  color:var(--muted);
-  margin-bottom:22px;
-  font-size:14px;
+h1, h2, h3 {
+  line-height: 1.3;
 }
 
-.player-panel{
-  background:#000;
-  border:1px solid #263142;
-  border-radius:16px;
-  overflow:hidden;
-  margin-bottom:28px;
+h2 {
+  margin-top: 35px;
 }
 
-.player-panel video{
-  display:block;
-  width:100%;
-  max-height:72vh;
-  aspect-ratio:16/9;
-  background:#000;
+.filter-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
 }
 
-.player-info{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  flex-wrap:wrap;
-  padding:15px 18px;
-  gap:10px;
-  background:#101722;
+.filter-section input,
+.filter-section select,
+.page > input {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: white;
+  border-radius: 10px;
+  padding: 12px;
+  min-width: 140px;
 }
 
-.player-info h3{
-  font-size:17px;
+.filter-section button,
+.page > button {
+  background: var(--accent);
+  color: #051b17;
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 17px;
+  font-weight: 700;
 }
 
-.live-badge{
-  color:#ff4b56;
-  font-weight:bold;
-  font-size:12px;
+.player-panel {
+  background: #030910;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 18px;
+  margin: 22px 0 30px;
 }
 
-.toolbar{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:22px;
+.player-panel h3 {
+  margin-top: 0;
 }
 
-.toolbar input,.toolbar select{
-  background:#151d29;
-  color:white;
-  border:1px solid #2b3748;
-  border-radius:9px;
-  padding:12px;
-  outline:none;
+.player-panel video {
+  display: block;
+  width: 100%;
+  max-height: 650px;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border-radius: 12px;
+  object-fit: contain;
 }
 
-.toolbar input{
-  flex:1;
-  min-width:160px;
+.player-panel audio {
+  width: 100%;
+  margin: 15px 0;
 }
 
-.toolbar select{
-  min-width:145px;
+.player-panel p {
+  color: var(--muted);
+  font-size: 13px;
 }
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(165px,1fr));
-  gap:18px;
+#playerFavorite {
+  margin-top: 15px;
+  padding: 10px 15px;
+  border-radius: 9px;
+  background: var(--panel2);
+  color: white;
+  border: 1px solid var(--border);
 }
 
-.itt-card{
-  background:var(--panel);
-  border:1px solid #222d3b;
-  border-radius:13px;
-  overflow:hidden;
-  transition:transform .2s,border .2s;
+.channel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 17px;
+  margin: 20px 0;
 }
 
-.itt-card:hover{
-  transform:translateY(-4px);
-  border-color:#45556b;
+.channel-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  overflow: hidden;
+  min-width: 0;
+  transition: transform .2s, border-color .2s;
 }
 
-.itt-card-image{
-  position:relative;
-  background:#182230;
-  aspect-ratio:16/9;
-  overflow:hidden;
+.channel-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent);
 }
 
-.itt-card-image img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
+.card-image {
+  height: 125px;
+  background: #172b40;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
 
-.itt-fav{
-  position:absolute;
-  top:9px;
-  right:9px;
-  background:rgba(0,0,0,.75);
-  color:white;
-  font-size:23px;
-  border-radius:50%;
-  width:35px;
-  height:35px;
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 12px;
 }
 
-.itt-card-body{
-  padding:13px;
+.card-placeholder {
+  font-size: 45px;
 }
 
-.itt-card-body h3{
-  font-size:14px;
-  margin-bottom:7px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+.card-info {
+  padding: 14px;
 }
 
-.itt-card-body p{
-  color:var(--muted);
-  font-size:12px;
-  height:18px;
-  overflow:hidden;
-  margin-bottom:12px;
+.card-info h3 {
+  margin: 0 0 8px;
+  font-size: 15px;
 }
 
-.itt-play{
-  width:100%;
-  background:#253247;
-  color:white;
-  border-radius:7px;
-  padding:10px;
-  font-weight:bold;
+.card-info p {
+  color: var(--muted);
+  font-size: 12px;
+  min-height: 18px;
 }
 
-.itt-play:hover{
-  background:var(--accent);
+.card-info button {
+  border: 0;
+  border-radius: 8px;
+  padding: 9px;
+  background: var(--panel2);
+  color: white;
+  margin: 4px 3px 0 0;
 }
 
-.itt-empty{
-  color:var(--muted);
-  padding:25px;
+.card-info button:first-of-type {
+  background: var(--accent);
+  color: #041b19;
+  font-weight: 800;
 }
 
-.more-btn{
-  display:block;
-  margin:28px auto;
-  background:#202b3a;
-  color:white;
-  padding:13px 24px;
-  border-radius:9px;
+#moreChannels,
+#moreRadio,
+#moreMovies {
+  display: none;
+  margin: 20px auto;
+  padding: 12px 25px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  font-weight: 800;
 }
 
-.more-btn:hover{
-  background:#34445c;
+.country-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 15px 0;
 }
 
-.message{
-  color:#a5b3c6;
-  font-size:13px;
-  margin:12px 0;
+.country-chip {
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 30px;
 }
 
-.radio-player{
-  width:100%;
-  background:#111a27;
-  border:1px solid #293647;
-  border-radius:12px;
-  padding:18px;
-  margin-bottom:25px;
+.country-chip:hover,
+.country-chip.selected {
+  background: var(--accent);
+  color: #061b17;
 }
 
-.radio-player audio{
-  width:100%;
+footer {
+  margin-top: 60px;
+  padding: 25px 0;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 12px;
 }
 
-.movie-player{
-  margin-bottom:25px;
-}
-
-.feature-card{
-  padding:24px;
-  background:var(--panel);
-  border:1px solid var(--border);
-  border-radius:15px;
-  margin-bottom:22px;
-}
-
-.feature-card h3{
-  margin-bottom:10px;
-}
-
-.feature-card p{
-  color:var(--muted);
-  line-height:1.7;
-}
-
-.footer{
-  text-align:center;
-  border-top:1px solid var(--border);
-  padding:30px 15px;
-  margin-top:50px;
-  color:#7f8ca1;
-  font-size:13px;
-}
-
-.footer strong{
-  color:white;
-}
-
-@media(max-width:900px){
-  .sidebar{
-    width:200px;
+@media(max-width:850px) {
+  .sidebar {
+    transform: translateX(-100%);
+    transition: .25s;
   }
 
-  .main{
-    padding:18px;
+  .sidebar.open {
+    transform: translateX(0);
   }
 
-  .grid{
-    grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
-    gap:13px;
+  .main-content {
+    margin-left: 0;
+    padding: 18px;
+  }
+
+  .topbar {
+    padding: 0 12px;
+    gap: 10px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
   }
 }
 
-@media(max-width:650px){
-  .topbar{
-    padding:0 14px;
-    height:60px;
+@media(max-width:480px) {
+  .brand {
+    font-size: 19px;
   }
 
-  .logo{
-    font-size:22px;
+  .topbar input {
+    min-width: 0;
+    padding: 10px;
   }
 
-  .menuToggle{
-    display:block;
+  .channel-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
-  .searchbox{
-    max-width:none;
+  .card-image {
+    height: 95px;
   }
 
-  .searchbox input{
-    padding:10px 12px;
-    font-size:12px;
+  .card-info {
+    padding: 10px;
   }
 
-  .layout{
-    min-height:calc(100vh - 60px);
-  }
-
-  .sidebar{
-    position:fixed;
-    left:-260px;
-    top:60px;
-    z-index:120;
-    height:calc(100vh - 60px);
-    width:250px;
-    transition:left .25s;
-    box-shadow:10px 0 30px rgba(0,0,0,.4);
-  }
-
-  .sidebar.open{
-    left:0;
-  }
-
-  .main{
-    padding:13px;
-    width:100%;
-  }
-
-  .hero{
-    min-height:230px;
-    padding:25px;
-    border-radius:14px;
-  }
-
-  .hero h1{
-    font-size:31px;
-  }
-
-  .section-title{
-    font-size:20px;
-  }
-
-  .grid{
-    grid-template-columns:repeat(2,minmax(0,1fr));
-    gap:12px;
-  }
-
-  .itt-card-body{
-    padding:10px;
-  }
-
-  .player-panel video{
-    max-height:none;
-  }
-
-  .toolbar select{
-    flex:1;
-  }
-}
-
-@media(min-width:1200px){
-  .main{
-    padding:32px;
-  }
-
-  .grid{
-    grid-template-columns:repeat(auto-fill,minmax(190px,1fr));
+  .hero {
+    padding: 30px 20px;
   }
 }
 </style>
@@ -545,404 +438,173 @@ a{
 
 <body>
 
-<!-- TOP BAR -->
-
 <header class="topbar">
-
-  <button class="menuToggle" id="menuToggle">☰</button>
-
-  <a href="#" class="logo">ITT<span>-TV</span></a>
-
-  <div class="searchbox">
-    <input id="globalSearch"
-      type="search"
-      placeholder="Search TV, radio, movies...">
-  </div>
-
+  <button id="menuToggle" aria-label="Menu">☰</button>
+  <a class="brand" href="#" data-page="home">ITT-TV</a>
+  <input id="globalSearch" type="search" placeholder="Search TV, radio and movies...">
 </header>
 
-<div class="layout">
-
-<!-- SIDEBAR -->
-
-<aside class="sidebar" id="sidebar">
-
-  <h4>Discover</h4>
-
-  <button class="navbtn active" data-page="tv">
-    📺 Live Television
-  </button>
-
-  <button class="navbtn" data-page="radio">
-    📻 Radio Stations
-  </button>
-
-  <button class="navbtn" data-page="movies">
-    🎬 Movies
-  </button>
-
-  <button class="navbtn" data-page="sports">
-    ⚽ Sports
-  </button>
-
-  <h4>Your Library</h4>
-
-  <button class="navbtn" data-page="favorites">
-    ♥ Favorites
-  </button>
-
-  <button class="navbtn" data-page="recent">
-    🕘 Recently Watched
-  </button>
-
-  <div class="feature-card" style="margin-top:25px">
-    <h3>ITT-TV</h3>
-    <p>Entertainment, television, radio and movies in one place.</p>
-  </div>
-
+<aside id="sidebar" class="sidebar">
+  <h2>ITT-TV</h2>
+  <button data-page="home" class="active">🏠 Home</button>
+  <button data-page="tv">📺 Live Television</button>
+  <button data-page="radio">📻 Live Radio</button>
+  <button data-page="movies">🎬 Movies</button>
+  <button data-page="favorites">❤️ Favorites</button>
+  <button data-page="recent">🕘 Recently Watched</button>
 </aside>
 
-<!-- MAIN CONTENT -->
+<main class="main-content">
 
-<main class="main">
-
-<!-- =================================================
-     TV PAGE
-================================================= -->
-
-<section class="page active" id="tvPage">
-
+<!-- HOME -->
+<section id="homePage" class="page active">
   <div class="hero">
-    <div class="hero-content">
-
-      <div class="hero-badge">LIVE ENTERTAINMENT</div>
-
-      <h1>Watch Live TV</h1>
-
-      <p>
-        Discover television channels from Rwanda and around the world.
-        Watch news, entertainment, sports and more.
-      </p>
-
-      <button class="primary-btn"
-        onclick="document.getElementById('tvGrid').scrollIntoView({behavior:'smooth'})">
-        Explore Channels
-      </button>
-
-    </div>
+    <h1>Welcome to ITT-TV</h1>
+    <p>
+      Your destination for television and radio from Rwanda
+      and around the world. Select a channel and enjoy available
+      live broadcasts.
+    </p>
+    <button data-page="tv">Explore Live TV</button>
+    <button data-page="radio">Listen to Radio</button>
   </div>
 
-  <h2 class="section-title">Live Player</h2>
-
-  <p class="section-sub">
-    Select a channel below to start watching.
-  </p>
-
-  <div class="player-panel" id="tvPlayerPanel">
-
-    <video id="tvVideo"
-      controls
-      autoplay
-      playsinline
-      preload="metadata">
-    </video>
-
-    <div class="player-info">
-      <h3 id="tvNowPlaying">Select a TV channel</h3>
-      <span class="live-badge">● LIVE</span>
-    </div>
-
+  <div class="stats">
+    <div><strong id="totalTV">0</strong><span>TV channels</span></div>
+    <div><strong id="totalRadio">0</strong><span>Radio stations</span></div>
+    <div><strong id="totalMovies">0</strong><span>Movie titles</span></div>
   </div>
 
-  <p class="message" id="tvMessage">Loading channels...</p>
+  <h2>🇷🇼 Rwanda TV</h2>
+  <div id="featuredChannels" class="channel-grid"></div>
 
-  <div class="toolbar">
+  <h2>Recently Watched</h2>
+  <div id="homeRecent" class="channel-grid"></div>
+</section>
 
-    <input id="tvSearch"
-      type="search"
-      placeholder="Search TV channels...">
+<!-- LIVE TV -->
+<section id="tvPage" class="page">
+  <h1>📺 Live Television</h1>
+  <p>Choose an available live channel.</p>
+
+  <div class="player-panel" id="tvPlayer">
+    <h3 id="tvNowPlaying">Select a TV channel</h3>
+    <video id="tvVideo" controls playsinline preload="none"></video>
+    <button id="playerFavorite">❤️ Add to Favorites</button>
+    <p id="tvMessage" role="status">TV channels loading...</p>
+  </div>
+
+  <div class="filter-section">
+    <input id="tvSearch" type="search" placeholder="Search TV channels">
 
     <select id="tvCountry">
-      <option value="">All Countries</option>
+      <option value="">All countries</option>
+      <option value="Rwanda">Rwanda</option>
     </select>
 
     <select id="tvCategory">
-      <option value="">All Categories</option>
+      <option value="">All categories</option>
+      <option value="News">News</option>
+      <option value="Sports">Sports</option>
+      <option value="Movies">Movies</option>
+      <option value="General">General</option>
     </select>
 
     <select id="tvSort">
-      <option value="">Default order</option>
-      <option value="name">Sort by name</option>
+      <option value="">Default</option>
+      <option value="az">A-Z</option>
+      <option value="country">Country</option>
     </select>
 
+    <button id="refreshTV">Refresh</button>
   </div>
 
-  <h2 class="section-title">All TV Channels</h2>
-
-  <div class="grid" id="tvGrid"></div>
-
-  <button class="more-btn" id="moreChannels">
-    Load More Channels
-  </button>
-
-  <h2 class="section-title">Movie TV Channels</h2>
-
-  <div class="grid" id="movieChannelsGrid"></div>
-
+  <div id="countryChips" class="country-chips"></div>
+  <p id="tvResultCount"></p>
+  <div id="tvGrid" class="channel-grid"></div>
+  <button id="moreChannels">Load more channels</button>
 </section>
 
-<!-- =================================================
-     RADIO PAGE
-================================================= -->
+<!-- RADIO -->
+<section id="radioPage" class="page">
+  <h1>📻 Live Radio</h1>
+  <p>Listen to available audio broadcasts.</p>
 
-<section class="page" id="radioPage">
-
-  <div class="hero">
-    <div class="hero-content">
-
-      <div class="hero-badge">LISTEN LIVE</div>
-
-      <h1>Radio Everywhere</h1>
-
-      <p>
-        Listen to radio stations from Rwanda and countries around the world.
-        Music, news, talk shows and more.
-      </p>
-
-    </div>
-  </div>
-
-  <h2 class="section-title">Radio Player</h2>
-
-  <div class="radio-player">
-
+  <div class="player-panel">
     <h3 id="radioNowPlaying">Select a radio station</h3>
-
-    <p class="message">
-      Live radio audio player
-    </p>
-
-    <audio id="radioPlayer"
-      controls
-      autoplay
-      preload="none">
-    </audio>
-
+    <p id="radioDetails">Radio information</p>
+    <audio id="radioPlayer" controls preload="none"></audio>
+    <p id="radioMessage" role="status">Radio stations loading...</p>
   </div>
 
-  <p class="message" id="radioMessage">
-    Loading radio stations...
-  </p>
-
-  <div class="toolbar">
-
-    <input id="radioSearch"
-      type="search"
-      placeholder="Search radio...">
+  <div class="filter-section">
+    <input id="radioSearch" type="search" placeholder="Search radio stations">
 
     <select id="radioCountry">
-      <option value="">All Countries</option>
+      <option value="">All countries</option>
+      <option value="Rwanda">Rwanda</option>
     </select>
 
     <select id="radioLanguage">
-      <option value="">All Languages</option>
+      <option value="">All genres</option>
+      <option value="news">News</option>
+      <option value="music">Music</option>
+      <option value="sports">Sports</option>
     </select>
 
+    <button id="refreshRadio">Refresh radio</button>
   </div>
 
-  <h2 class="section-title">Radio Stations</h2>
+  <h2>🇷🇼 Rwanda Official Radio Websites</h2>
+  <p>Open the broadcaster's official listening page.</p>
+  <div id="rwandaRadioLinks" class="channel-grid"></div>
 
-  <div class="grid" id="radioGrid"></div>
-
-  <button class="more-btn" id="moreRadio">
-    Load More Radio
-  </button>
-
+  <h2>International and Rwanda Radio Streams</h2>
+  <p id="radioResultCount"></p>
+  <div id="radioGrid" class="channel-grid"></div>
+  <button id="moreRadio">Load more stations</button>
 </section>
 
-<!-- =================================================
-     MOVIES PAGE
-================================================= -->
+<!-- MOVIES -->
+<section id="moviesPage" class="page">
+  <h1>🎬 Movies and Entertainment</h1>
 
-<section class="page" id="moviesPage">
-
-  <div class="hero">
-    <div class="hero-content">
-
-      <div class="hero-badge">MOVIE COLLECTION</div>
-
-      <h1>Movies & Cinema</h1>
-
-      <p>
-        Explore movie collections and discover films available
-        through public archives and authorized sources.
-      </p>
-
-    </div>
+  <div class="player-panel" id="moviePlayerPanel">
+    <h3 id="movieNowPlaying">Select a movie</h3>
+    <video id="movieVideo" controls playsinline preload="none"></video>
+    <p id="movieMessage" role="status"></p>
   </div>
 
-  <h2 class="section-title">Movie Player</h2>
+  <h2>Movie Channels</h2>
+  <p id="movieChannelsMessage">Loading movie channels...</p>
+  <div id="movieChannelsGrid" class="channel-grid"></div>
 
-  <div class="player-panel movie-player" id="moviePlayerPanel">
-
-    <video id="movieVideo"
-      controls
-      playsinline
-      preload="metadata">
-    </video>
-
-    <div class="player-info">
-      <h3 id="movieNowPlaying">Select a movie</h3>
-    </div>
-
-  </div>
-
-  <p class="message" id="movieMessage">
-    Search movies below.
-  </p>
-
-  <div class="toolbar">
-
-    <input id="movieSearch"
-      type="search"
-      placeholder="Search movies by title...">
-
-  </div>
-
-  <h2 class="section-title">Movie Collection</h2>
-
-  <p class="section-sub">
-    Movie availability depends on the source and playback rights.
-  </p>
-
-  <div class="grid" id="movieGrid"></div>
-
-  <button class="more-btn" id="moreMovies">
-    Load More Movies
-  </button>
-
+  <h2>Public Archive Catalog</h2>
+  <input id="movieSearch" type="search" placeholder="Search movie titles">
+  <button id="searchMovies">Search</button>
+  <p id="movieResultCount"></p>
+  <div id="movieGrid" class="channel-grid"></div>
+  <button id="moreMovies">Load more movies</button>
 </section>
 
-<!-- =================================================
-     SPORTS PAGE
-================================================= -->
-
-<section class="page" id="sportsPage">
-
-  <div class="hero">
-    <div class="hero-content">
-
-      <div class="hero-badge">SPORTS WORLD</div>
-
-      <h1>Sports</h1>
-
-      <p>
-        Discover sports coverage, football news, sports television
-        and live events through official broadcasters.
-      </p>
-
-    </div>
-  </div>
-
-  <div class="feature-card">
-    <h2>⚽ Football</h2>
-    <p>
-      Follow football competitions, teams, results and news
-      from official sports providers.
-    </p>
-    <br>
-    <a href="https://www.fifa.com/"
-       target="_blank"
-       rel="noopener noreferrer"
-       class="primary-btn">
-      FIFA
-    </a>
-  </div>
-
-  <div class="feature-card">
-    <h2>🏀 Basketball</h2>
-    <p>Explore basketball news and official league coverage.</p>
-    <br>
-    <a href="https://www.nba.com/"
-       target="_blank"
-       rel="noopener noreferrer"
-       class="primary-btn">
-      NBA
-    </a>
-  </div>
-
-  <div class="feature-card">
-    <h2>🏆 Sports News</h2>
-    <p>Discover sports news and highlights.</p>
-    <br>
-    <a href="https://www.espn.com/"
-       target="_blank"
-       rel="noopener noreferrer"
-       class="primary-btn">
-      ESPN
-    </a>
-  </div>
-
+<!-- FAVORITES -->
+<section id="favoritesPage" class="page">
+  <h1>❤️ My Favorites</h1>
+  <div id="favoritesGrid" class="channel-grid"></div>
 </section>
 
-<!-- =================================================
-     FAVORITES
-================================================= -->
-
-<section class="page" id="favoritesPage">
-
-  <div class="hero">
-    <div class="hero-content">
-      <h1>My Favorites</h1>
-      <p>Your saved TV channels, radio stations and movies.</p>
-    </div>
-  </div>
-
-  <div class="grid" id="favoritesGrid"></div>
-
+<!-- RECENT -->
+<section id="recentPage" class="page">
+  <h1>🕘 Recently Watched</h1>
+  <div id="recentGrid" class="channel-grid"></div>
 </section>
 
-<!-- =================================================
-     RECENT
-================================================= -->
-
-<section class="page" id="recentPage">
-
-  <div class="hero">
-    <div class="hero-content">
-      <h1>Recently Watched</h1>
-      <p>Quickly return to what you recently watched or listened to.</p>
-    </div>
-  </div>
-
-  <div class="grid" id="recentGrid"></div>
-
-</section>
-
-<!-- FOOTER -->
-
-<footer class="footer">
-
-  <strong>ITT-TV</strong>
-
-  <p style="margin-top:10px">
-    TV · Radio · Movies · Sports
-  </p>
-
-  <p style="margin-top:8px">
-    © <span id="year"></span> ITT-TV
-  </p>
-
+<footer>
+  <p>ITT-TV © <span id="year"></span></p>
+  <p>Live stream availability depends on broadcaster servers and permissions.</p>
 </footer>
 
 </main>
-</div>
-
-<!-- HLS SUPPORT -->
-
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-
-<!-- ITT-TV APP -->
 
 <script src="app.js"></script>
 
